@@ -48,6 +48,13 @@
 
 /********* You can start writing your CSS below this line: **********/
 
+
+:root {
+    --tictacmatchCardScale: .45;
+    --tictacmatchCardWidth: 258px;
+    --tictacmatchCardHeight: 358px;
+}
+
 .ttm-table {
     align-items: center;
     display: flex;
@@ -59,34 +66,39 @@
     border: 1px solid #33333333;
     border-radius: 10px;
 }
+.ttm-title {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.ttm-discard-pile,
+.ttm-deck {
+    position: relative;
+}
 
 .ttm-board-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-gap: 5px;
+    grid-gap: .5em;
 }
 
 .ttm-hand {
     display: flex;
-    margin-top: 20px;
+    margin-top: 2em;
     justify-content: space-evenly;
 }
 
 .ttm-hand__cards {
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 1em;
 }
 .ttm-hand__cards .card {
-    margin: 0 10px;
 }
 
 .ttm-hand__placeholder {
-    width: calc(258px * var(--tictacmatchCardScale));
-    height: calc(358px * var(--tictacmatchCardScale));
-}
-
-:root {
-    --tictacmatchCardScale: .45;
+    width: calc(var(--tictacmatchCardWidth) * var(--tictacmatchCardScale));
+    height: calc(var(--tictacmatchCardHeight) * var(--tictacmatchCardScale));
 }
 
 .card {
@@ -96,8 +108,41 @@
     border-radius: 13px;
     box-shadow: 2px 1px 1px rgb(0 0 0 / 44%);
     box-sizing: content-box;
-    width: calc(258px * var(--tictacmatchCardScale));
-    height: calc(358px * var(--tictacmatchCardScale));
+    width: calc(var(--tictacmatchCardWidth) * var(--tictacmatchCardScale));
+    height: calc(var(--tictacmatchCardHeight) * var(--tictacmatchCardScale));
+}
+.card-badge {
+    position: absolute;
+    color: white;
+    font-weight: bold;
+    bottom: 1em;
+    z-index: 0;
+    font-size: 30px;
+    text-shadow: 1px 1px 1px #000;
+    /* text-shadow: 1px 1px 1px #000, 0px 0px 1em #000; */
+}
+.card-badge,
+.card-badge:before,
+.card-badge:after {
+    width: calc(var(--tictacmatchCardWidth) * var(--tictacmatchCardScale));
+    text-align: center;
+}
+
+/* add a single stroke */
+.card-badge:before {
+  content: attr(title);
+  position: absolute;
+  -webkit-text-stroke: 0.2em #77749F;
+  left: 0;
+  z-index: -1;
+}
+/* add a double stroke */
+.card-badge:after {
+  content: attr(title);
+  position: absolute;
+  -webkit-text-stroke: 0.3em #FDF051;
+  left: 0;
+  z-index: -2;
 }
 
 .card--blue_x {

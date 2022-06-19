@@ -29,8 +29,9 @@
 <div class="ttm-game">
     <div class="ttm-table">
         <div class="ttm-deck whiteblock">
-            <h3>Deck</h3>
+            <h3 class="ttm-title">Deck</h3>
             <div class="card card--back"></div>
+            <span class="card-badge" title="20x">20x</span>
         </div>
 
         <div class="ttm-board-grid">
@@ -46,18 +47,19 @@
         </div>
 
         <div class="ttm-discard-pile whiteblock">
-            <h3><span class="translate">Discard</span></h3>
+            <h3 class="ttm-title"><span class="translate">Discard</span></h3>
             <div class="card card--action_2plus"></div>
+            <span class="card-badge" title="4x">4x</span>
         </div>
     </div>
 
     <div class="ttm-hand">
         <div class="ttm-hand__team whiteblock">
-            <h3><span class="translate">Team</span></h3>
+            <h3 class="ttm-title"><span class="translate">Team</span></h3>
             <div class="card card--team_x"></div>
         </div>
         <div class="ttm-hand__cards-wrapper whiteblock">
-            <h3>Hand</h3>
+            <h3 class="ttm-title">Hand</h3>
             <div class="ttm-hand__cards">
                 <div class="card card--blue_o"></div>
                 <div class="card card--action_wipe_out"></div>
