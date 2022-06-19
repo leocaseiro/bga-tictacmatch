@@ -1,0 +1,162 @@
+/**
+ *------
+ * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
+ * tictacmatchleocaseiro implementation : © <Your name here> <Your email address here>
+ *
+ * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
+ * See http://en.boardgamearena.com/#!doc/Studio for more information.
+ * -----
+ *
+ * tictacmatchleocaseiro.css
+ *
+ * tictacmatchleocaseiro stylesheet
+ *
+ */
+
+/*
+    This is the CSS stylesheet of your game User Interface.
+
+    Styles defined on this file will be applied to the HTML elements you define in your
+    HTML template (tictacmatchleocaseiro_tictacmatchleocaseiro.tpl), and to HTML elements you create dynamically
+    (in tictacmatchleocaseiro.js).
+
+    Usually, you are using CSS to:
+
+    1°) define the overall layout of your game
+        (ex: place the board on the top left, place player's hand beside, place the deck on the right, ...).
+
+    2°) create your CSS-sprites:
+        All images of your games should be gathered into a small number of image files. Then, using
+        background-image and background-position CSS properties, you create HTML blocks that can
+        display these images correctly (see example below).
+
+    3°) ... anything else:
+        It is really easy to add and remove CSS classes dynamically from your Javascript with
+        dojo.addClass and dojo.removeClass. It is also easy to check if an element has a class
+        (dojo.hasClass) or to get all elements with a specific class (dojo.query). This is why,
+        very often, using CSS classes for the logic of your user interface allow you to do complex
+        thing easily.
+
+
+     Note: on the production platform, this file will be compressed and comments will be removed.
+           Consequently, don't hesitate to put as many comments as necessary.
+*/
+
+
+/* Note: you must not use any @import directive */
+
+
+/********* You can start writing your CSS below this line: **********/
+
+.ttm-table {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+
+.ttm-game .whiteblock {
+    border: 1px solid #33333333;
+    border-radius: 10px;
+}
+
+.ttm-board-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 5px;
+}
+
+.ttm-hand {
+    display: flex;
+    margin-top: 20px;
+    justify-content: space-evenly;
+}
+
+.ttm-hand__cards {
+    display: flex;
+    justify-content: center;
+}
+.ttm-hand__cards .card {
+    margin: 0 10px;
+}
+
+.ttm-hand__placeholder {
+    width: calc(258px * var(--tictacmatchCardScale));
+    height: calc(358px * var(--tictacmatchCardScale));
+}
+
+:root {
+    --tictacmatchCardScale: .45;
+}
+
+.card {
+    background-image: url('./img/cards_sprites.png');
+    background-size: 500% 300%;
+    border: 1px solid #151730;
+    border-radius: 13px;
+    box-shadow: 2px 1px 1px rgb(0 0 0 / 44%);
+    box-sizing: content-box;
+    width: calc(258px * var(--tictacmatchCardScale));
+    height: calc(358px * var(--tictacmatchCardScale));
+}
+
+.card--blue_x {
+    background-position: -0 -0;
+}
+
+.card--blue_o {
+    background-position: -100% -0;
+}
+
+.card--green_o {
+    background-position: -200% -0;
+}
+
+.card--green_x {
+    background-position: -0 -100%;
+}
+
+.card--red_x {
+    background-position: -100% -100%;
+}
+
+.card--red_o {
+    background-position: -200% -100%;
+}
+
+.card--yellow_o {
+    background-position: -300% -0;
+}
+
+.card--yellow_x {
+    background-position: -300% -100%;
+}
+
+.card--action_wipe_out {
+    background-position: -400% -0;
+}
+
+.card--team_x {
+    background-position: -400% -100%;
+}
+
+.card--back {
+    background-position: -0 -200%;
+}
+
+.card--action_2plus {
+    background-position: -100% -200%;
+}
+
+.card--team_o {
+    background-position: -200% -200%;
+}
+
+.card--action_flip {
+    background-position: -300% -200%;
+}
+
+.card--empty {
+    background: rgba(50, 25, 10, .05);
+    box-shadow: 0px 0px 10px rgb(50 20 10 / 67%) inset;
+}
