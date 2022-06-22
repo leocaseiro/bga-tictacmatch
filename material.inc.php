@@ -19,71 +19,96 @@
  *
  */
 
-$this->cards = [
+$this->ttm_cards = [
   0 => [
     'type' => clienttranslate('symbol'),
+    'type_arg' => 0,
+    'nbr' => 6,
+    'class' => 'blue_x',
     'color' => clienttranslate('blue'),
-    'value' => 'X',
-    'nbr' => 6
+    'value' => 'X'
   ],
   1 => [
     'type' => clienttranslate('symbol'),
+    'type_arg' => 1,
+    'nbr' => 6,
+    'class' => 'blue_o',
     'color' => clienttranslate('blue'),
-    'value' => 'O',
-    'nbr' => 6
+    'value' => 'O'
   ],
   2 => [
     'type' => clienttranslate('symbol'),
+    'type_arg' => 2,
+    'nbr' => 6,
+    'class' => 'green_x',
     'color' => clienttranslate('green'),
-    'value' => 'X',
-    'nbr' => 6
+    'value' => 'X'
   ],
   3 => [
     'type' => clienttranslate('symbol'),
+    'type_arg' => 3,
+    'nbr' => 6,
+    'class' => 'green_o',
     'color' => clienttranslate('green'),
-    'value' => 'O',
-    'nbr' => 6
+    'value' => 'O'
   ],
   4 => [
     'type' => clienttranslate('symbol'),
+    'type_arg' => 4,
+    'nbr' => 6,
+    'class' => 'red_x',
     'color' => clienttranslate('red'),
-    'value' => 'X',
-    'nbr' => 6
+    'value' => 'X'
   ],
   5 => [
     'type' => clienttranslate('symbol'),
+    'type_arg' => 5,
+    'nbr' => 6,
+    'class' => 'red_o',
     'color' => clienttranslate('red'),
-    'value' => 'O',
-    'nbr' => 6
+    'value' => 'O'
   ],
   6 => [
     'type' => clienttranslate('symbol'),
+    'type_arg' => 6,
+    'nbr' => 6,
+    'class' => 'yellow_x',
     'color' => clienttranslate('yellow'),
-    'value' => 'X',
-    'nbr' => 6
+    'value' => 'X'
   ],
   7 => [
     'type' => clienttranslate('symbol'),
+    'type_arg' => 7,
+    'nbr' => 6,
+    'class' => 'yellow_o',
     'color' => clienttranslate('yellow'),
-    'value' => 'O',
-    'nbr' => 6
+    'value' => 'O'
   ],
   8 => [
     'type' => clienttranslate('action'),
-    'value' => clienttranslate('double play card'),
-    'nbr' => 4
+    'type_arg' => 8,
+    'nbr' => 4,
+    'class' => 'action_flip',
+    'color' => clienttranslate('action'),
+    'value' => clienttranslate('double play card')
   ],
   9 => [
     'type' => clienttranslate('action'),
-    'value' => clienttranslate('flip card'),
-    'nbr' => 4
+    'type_arg' => 9,
+    'nbr' => 4,
+    'class' => 'action_2plus',
+    'color' => clienttranslate('action'),
+    'value' => clienttranslate('flip card')
   ],
   10 => [
     'type' => clienttranslate('action'),
-    'value' => clienttranslate('wipe out card'),
-    'nbr' => 4
+    'type_arg' => 10,
+    'nbr' => 4,
+    'class' => 'action_wipe_out',
+    'color' => clienttranslate('action'),
+    'value' => clienttranslate('wipe out card')
   ],
-]
+];
 /*
 
 Example:
