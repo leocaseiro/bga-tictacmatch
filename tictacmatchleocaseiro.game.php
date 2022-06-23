@@ -163,14 +163,14 @@ class tictacmatchleocaseiro extends Table
             }
 		}
 
-        // Set symbol for players
+        // Set symbol for players (first player has opposite side as the table on first draw)
         $this->addExtraCardPropertiesFromMaterial($initialCard);
         if ($initialCard['value'] === 'X') {
-            self::setGameStateInitialValue( 'evens_team', self::TEAM_X );
-            self::setGameStateInitialValue( 'odds_team', self::TEAM_O );
-        } else {
             self::setGameStateInitialValue( 'evens_team', self::TEAM_O );
             self::setGameStateInitialValue( 'odds_team', self::TEAM_X );
+        } else {
+            self::setGameStateInitialValue( 'evens_team', self::TEAM_X );
+            self::setGameStateInitialValue( 'odds_team', self::TEAM_O );
         }
 
         // Activate first player (which is in general a good idea :) )
