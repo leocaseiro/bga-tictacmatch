@@ -26,6 +26,10 @@ class tictacmatchleocaseiro extends Table
 	const TEAM_1_4 = 3;
 	const TEAM_RANDOM = 4;
 
+    const TEAM_O = 0;
+    const TEAM_X = 10;
+
+
 	function __construct( )
 	{
         // Your global variables labels:
@@ -38,6 +42,8 @@ class tictacmatchleocaseiro extends Table
 
         self::initGameStateLabels( array(
             'playerTeams' => 100,
+            'odds_team' => 101,
+            'evens_team' => 102,
         ) );
         $this->cards = self::getNew( "module.common.deck" );
         $this->cards->init( "card" );
@@ -145,6 +151,28 @@ class tictacmatchleocaseiro extends Table
 			$this->cards->pickCards(4, 'deck', $playerId);
 		}
 
+        // Setup grid with card on middle
+        $initialCard = null;
+        while ($initialCard == null) {
+            $drewedCard = $this->cards->pickCardForLocation('deck', 'cardsontable', 4);
+            if ($drewedCard['type'] === 'symbol') {
+                $initialCard = $drewedCard;
+            } else {
+                // if action card, discard to draw another one.
+                $this->cards->moveCard( $drewedCard['id'], 'discardpile');
+            }
+		}
+
+        // Set symbol for players
+        $this->addExtraCardPropertiesFromMaterial($initialCard);
+        if ($initialCard['value'] === 'X') {
+            self::setGameStateInitialValue( 'evens_team', self::TEAM_X );
+            self::setGameStateInitialValue( 'odds_team', self::TEAM_O );
+        } else {
+            self::setGameStateInitialValue( 'evens_team', self::TEAM_O );
+            self::setGameStateInitialValue( 'odds_team', self::TEAM_X );
+        }
+
         // Activate first player (which is in general a good idea :) )
         $this->activeNextPlayer();
 
@@ -173,12 +201,23 @@ class tictacmatchleocaseiro extends Table
 
         // Cards in player hand
         $result['hand'] = $this->cards->getPlayerHand($current_player_id);
-        foreach($result['hand'] as $hand_id => $card) {
-            $this->addExtraCardPropertiesFromMaterial($result['hand'][$hand_id]);
+        foreach($result['hand'] as $card_id => $card) {
+            $this->addExtraCardPropertiesFromMaterial($result['hand'][$card_id]);
         }
 
         // Cards played on the table
         $result['cardsontable'] = $this->cards->getCardsInLocation('cardsontable');
+        $result['discardpile'] = $this->cards->getCardsInLocation('discardpile');
+        foreach($result['discardpile'] as $card_id => $card) {
+            $this->addExtraCardPropertiesFromMaterial($result['discardpile'][$card_id]);
+        }
+        $result['totalcardsondeck'] = $this->cards->countCardInLocation('deck');
+
+        // Get teams
+        $result['teams'] = [
+            'even' => $this->getTeamValue(self::getGameStateValue('evens_team')),
+            'odd' => $this->getTeamValue(self::getGameStateValue('odds_team'))
+        ];
 
         return $result;
     }
@@ -211,6 +250,10 @@ class tictacmatchleocaseiro extends Table
         $card['class'] = $materialCard['class'];
         $card['color'] = $materialCard['color'];
         $card['value'] = $materialCard['value'];
+    }
+
+    function getTeamValue($stateId) {
+        return $stateId == 10 ? 'X' : 'O';
     }
 
 
