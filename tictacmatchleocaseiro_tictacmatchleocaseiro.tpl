@@ -60,11 +60,8 @@
         </div>
         <div class="ttm-hand__cards-wrapper whiteblock">
             <h3 class="ttm-title">Hand</h3>
-            <div class="ttm-hand__cards">
-                <div class="card card--blue_o"></div>
-                <div class="card card--action_wipe_out"></div>
-                <div class="card card--yellow_o"></div>
-                <div class="card card--action_flip"></div>
+            <div id="js-hand__cards" class="ttm-hand__cards">
+
             </div>
         </div>
         <div class="ttm-hand__placeholder"></div>
@@ -75,12 +72,7 @@
 
 // Javascript HTML templates
 
-/*
-// Example:
-var jstpl_some_game_item='<div class="my_game_item" id="my_game_item_${MY_ITEM_ID}"></div>';
-
-*/
-
+var jstpl_card='<div id="js-card-${ID}" class="card card--${CLASS}" data-value="${VALUE}" data-color="${COLOR}"></div>';
 </script>
 
 {OVERALL_GAME_FOOTER}

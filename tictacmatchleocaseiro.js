@@ -48,19 +48,26 @@ function (dojo, declare) {
         setup: function( gamedatas )
         {
             console.log( "Starting game setup" );
-            // this.playerHand = this.gamedatas.hand;
-            console.log('playerHand', this.gamedatas.hand)
 
             // Setting up player boards
             for( var player_id in gamedatas.players )
             {
                 var player = gamedatas.players[player_id];
-
-                // TODO: Setting up players boards if needed
             }
+            // Deal cards to current player hand
+            Object.entries(this.gamedatas.hand).forEach(([id, card]) => {
+                const cardDiv = this.format_block('jstpl_card', {
+                    ID: id,
+                    CLASS: card.class,
+                    COLOR: card.color,
+                    VALUE: card.value,
+                });
 
-            // TODO: Set up your game interface here, according to "gamedatas"
+                dojo.place(cardDiv, 'js-hand__cards');
+                this.addTooltip(`js-card-${id}`, _(`${card.value} ${card.color}`), _('Click to play card'));
+            });
 
+            this.addTooltipToClass('js-card', 'js-hand__cards');
 
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
