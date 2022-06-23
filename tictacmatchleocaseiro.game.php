@@ -154,7 +154,7 @@ class tictacmatchleocaseiro extends Table
         // Setup grid with card on middle
         $initialCard = null;
         while ($initialCard == null) {
-            $drewedCard = $this->cards->pickCardForLocation('deck', 'cardsontable', 4);
+            $drewedCard = $this->cards->pickCardForLocation('deck', 'boardgrid', 4);
             if ($drewedCard['type'] === 'symbol') {
                 $initialCard = $drewedCard;
             } else {
@@ -201,16 +201,17 @@ class tictacmatchleocaseiro extends Table
 
         // Cards in player hand
         $result['hand'] = $this->cards->getPlayerHand($current_player_id);
-        foreach($result['hand'] as $card_id => $card) {
-            $this->addExtraCardPropertiesFromMaterial($result['hand'][$card_id]);
-        }
+        $this->populateCardProperties($result['hand']);
 
-        // Cards played on the table
-        $result['cardsontable'] = $this->cards->getCardsInLocation('cardsontable');
-        $result['discardpile'] = $this->cards->getCardsInLocation('discardpile');
-        foreach($result['discardpile'] as $card_id => $card) {
-            $this->addExtraCardPropertiesFromMaterial($result['discardpile'][$card_id]);
-        }
+        // Cards on board grid // TODO maybe only keep top card from stack only
+        $result['boardgrid'] = $this->cards->getCardsInLocation('boardgrid');
+        $this->populateCardProperties($result['boardgrid']);
+
+        // Cards on discardpile // TODO maybe only keep top card from stack only
+        $result['discardpiletopcard'] = $this->cards->getCardOnTop('discardpile');
+        $this->addExtraCardPropertiesFromMaterial($result['discardpiletopcard']);
+
+        $result['totalcardsondiscardpile'] = $this->cards->countCardInLocation('discardpile');
         $result['totalcardsondeck'] = $this->cards->countCardInLocation('deck');
 
         // Get teams
@@ -250,6 +251,12 @@ class tictacmatchleocaseiro extends Table
         $card['class'] = $materialCard['class'];
         $card['color'] = $materialCard['color'];
         $card['value'] = $materialCard['value'];
+    }
+
+    function populateCardProperties(&$cards) {
+        foreach($cards as $card_id => $card) {
+            $this->addExtraCardPropertiesFromMaterial($cards[$card_id]);
+        }
     }
 
     function getTeamValue($stateId) {

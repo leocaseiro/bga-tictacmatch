@@ -28,8 +28,8 @@ function (dojo, declare) {
             // Here, you can init the global variables of your user interface
             // Example:
             // this.myGlobalValue = 0;
-            // this.playerHand = null;
-
+            this.playerHand = null;
+            this.selectedCardId = null;
         },
 
         /*
@@ -49,25 +49,101 @@ function (dojo, declare) {
         {
             console.log( "Starting game setup" );
 
+            this.playerHand = this.gamedatas.hand;
+            this.boardGrid = this.gamedatas.boardgrid;
+            this.topDiscardPile = this.gamedatas.discardpiletopcard;
+
             // Setting up player boards
             for( var player_id in gamedatas.players )
             {
                 var player = gamedatas.players[player_id];
             }
+
             // Deal cards to current player hand
-            Object.entries(this.gamedatas.hand).forEach(([id, card]) => {
+            Object.entries(this.playerHand).forEach(([id, card]) => {
+                const domId = `js-card-${id}`;
                 const cardDiv = this.format_block('jstpl_card', {
-                    ID: id,
+                    ID: domId,
+                    DATAID: id,
                     CLASS: card.class,
                     COLOR: card.color,
-                    VALUE: card.value,
+                    CARDVALUE: card.value,
                 });
 
                 dojo.place(cardDiv, 'js-hand__cards');
-                this.addTooltip(`js-card-${id}`, _(`${card.value} ${card.color}`), _('Click to play card'));
+                this.addTooltip(domId, _(`${card.value} ${card.color}`), _('Click to play card'));
+
+                document.getElementById(domId).addEventListener('click', (event) => {
+                    const target = event.target;
+                    this.selectCardId = target.dataset.id;
+                    const color = target.dataset.color;
+
+                    console.log('color', color);
+                    console.log('card', card);
+                });
             });
 
-            this.addTooltipToClass('js-card', 'js-hand__cards');
+            // Show cards on Grid
+            Object.entries(this.boardGrid).forEach(([id, card]) => {
+                const domId = `js-board-cell--${card.location_arg}`;
+                const cardDiv = this.format_block('jstpl_card', {
+                    ID: domId,
+                    DATAID: id,
+                    CLASS: card.class,
+                    COLOR: card.color,
+                    CARDVALUE: card.value,
+                });
+
+                dojo.place(cardDiv, domId, 'replace');
+                this.addTooltip(domId, _(`${card.value} ${card.color}`), _('Click to place card'));
+
+                document.getElementById(domId).addEventListener('click', (event) => {
+                    const target = event.target;
+                    const color = target.dataset.color;
+
+                    console.log('color', color);
+                    console.log('card', card);
+                });
+            });
+
+            // Show number of cards on deck
+            const deckTotal = `${this.gamedatas.totalcardsondeck}x`;
+            const deckBadge = document.getElementById('js-deck-badge');
+            deckBadge.setAttribute('title', deckTotal);
+            deckBadge.innerText = deckTotal;
+
+            // Show card on Discard Pile
+            if (this.topDiscardPile) {
+                const domId = 'js-discard-pile-card';
+                const discardPileCardDiv = this.format_block('jstpl_card', {
+                    ID: domId,
+                    DATAID: this.topDiscardPile.id,
+                    CLASS: this.topDiscardPile.class,
+                    COLOR: this.topDiscardPile.color,
+                    CARDVALUE: this.topDiscardPile.value,
+                });
+
+                dojo.place(discardPileCardDiv, domId, 'replace');
+                this.addTooltip(domId, _('Discard Pile'), _('Click to discard card'));
+
+                document.getElementById(domId).addEventListener('click', (event) => {
+                    const target = event.target;
+                    const color = target.dataset.color;
+
+                    console.log('color', color);
+                    console.log('card', card);
+                });
+            }
+
+            // Show number of cards on Discard Pile
+            const discardTotal = `${this.gamedatas.totalcardsondiscardpile}x`;
+            const discardPileBadge = document.getElementById('js-discard-pile-badge');
+            discardPileBadge.setAttribute('title', discardTotal);
+            discardPileBadge.innerText = discardTotal;
+
+            // Show player team card
+            const teamCardClass = `card--team_${this.getTeamValue().toLowerCase()}`;
+            dojo.replaceClass('js-team-card', teamCardClass, 'card--empty');
 
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
@@ -167,10 +243,16 @@ function (dojo, declare) {
             script.
 
         */
+       getTeamValue: function() {
+            const playerObj = this.gamedatas.players[this.player_id];
+            return Number(playerObj.player_no) % 2 === 0 ? this.gamedatas.teams.even : this.gamedatas.teams.odd;
+       },
 
 
         ///////////////////////////////////////////////////
         //// Player's action
+
+
 
         /*
 
@@ -182,6 +264,12 @@ function (dojo, declare) {
             _ make a call to the game server
 
         */
+
+        onSelectCard: function () {
+            if (!this.checkAction('playCard', true)) {
+                return;
+            }
+        },
 
         /* Example:
 
