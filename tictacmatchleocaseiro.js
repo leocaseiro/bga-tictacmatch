@@ -47,6 +47,7 @@ function (dojo, declare) {
 
         setup: function( gamedatas )
         {
+            const self = this;
             console.log( "Starting game setup" );
 
             this.playerHand = this.gamedatas.hand;
@@ -71,21 +72,24 @@ function (dojo, declare) {
                 });
 
                 dojo.place(cardDiv, 'js-hand__cards');
-                this.addTooltip(domId, _(`${card.value} ${card.color}`), _('Click to play card'));
+                this.addTooltip(domId, _(`${card.value} ${card.color}`), _('Click to select card'));
 
-                document.getElementById(domId).addEventListener('click', (event) => {
-                    const target = event.target;
-                    this.selectCardId = target.dataset.id;
-                    const color = target.dataset.color;
+                dojo.connect($(domId), 'onclick', this, this.onHandCardClick);
+            });
 
-                    console.log('color', color);
-                    console.log('card', card);
-                });
+            // Add event listeners to Grid cells
+            Array.from(document.querySelectorAll('[id^="js-board-cell--"]')).forEach(function(el) {
+                self.addTooltip(el.id, _('Card cell'), _('Click to place card'));
+                dojo.connect($(el.id), 'onclick', self, self.onGridCardClick);
             });
 
             // Show cards on Grid
-            Object.entries(this.boardGrid).forEach(([id, card]) => {
-                const domId = `js-board-cell--${card.location_arg}`;
+            Object.entries(this.boardGrid).forEach(([id, card], i) => {
+                if (!card) {
+                    return;
+                }
+
+                const domId = `js-board-cell--${i}`;
                 const cardDiv = this.format_block('jstpl_card', {
                     ID: domId,
                     DATAID: id,
@@ -93,17 +97,12 @@ function (dojo, declare) {
                     COLOR: card.color,
                     CARDVALUE: card.value,
                 });
+                this.removeTooltip(domId);
 
                 dojo.place(cardDiv, domId, 'replace');
-                this.addTooltip(domId, _(`${card.value} ${card.color}`), _('Click to place card'));
-
-                document.getElementById(domId).addEventListener('click', (event) => {
-                    const target = event.target;
-                    const color = target.dataset.color;
-
-                    console.log('color', color);
-                    console.log('card', card);
-                });
+                this.addTooltip(domId, _(`${card.value} ${card.color}`), _(`Click to place a ${card.value} card or a ${card.color} card`));
+                dojo.setAttr($(domId), 'data-cell', i);
+                dojo.connect($(domId), 'onclick', self, self.onGridCardClick);
             });
 
             // Show number of cards on deck
@@ -125,14 +124,6 @@ function (dojo, declare) {
 
                 dojo.place(discardPileCardDiv, domId, 'replace');
                 this.addTooltip(domId, _('Discard Pile'), _('Click to discard card'));
-
-                document.getElementById(domId).addEventListener('click', (event) => {
-                    const target = event.target;
-                    const color = target.dataset.color;
-
-                    console.log('color', color);
-                    console.log('card', card);
-                });
             }
 
             // Show number of cards on Discard Pile
@@ -265,10 +256,69 @@ function (dojo, declare) {
 
         */
 
-        onSelectCard: function () {
+        onHandCardClick: function (e) {
             if (!this.checkAction('playCard', true)) {
                 return;
             }
+            this.selectCard = e.target.dataset;
+
+            if (this.selectCard.color === 'action') {
+                this.ajaxcall(
+                    '/tictacmatchleocaseiro/tictacmatchleocaseiro/playAction.html',
+                    {
+                        lock: true,
+                        cardId: this.selectCard.id,
+                    },
+                    this,
+                    function( result ) {
+                        // Do some stuff after a successful call
+                        // NB : usually not needed as changes must be handled by notifications
+                        // You should NOT modify the interface in a callback or it will most likely break the framework replays (or make it inaccurate)
+                        // You should NOT make another ajaxcall in a callback in order not to create race conditions
+                    }
+                );
+            }
+        },
+
+        onGridCardClick: function (e) {
+            if (!this.checkAction('playCard', true)) {
+                return;
+            }
+
+            if (!this.selectCard) {
+                this.showMessage(_('Please select a card from your hand!'), 'error');
+            }
+
+            const cell = e.target.dataset;
+
+            // empty cell or same color and not same value
+            if (cell.id) {
+                if (cell.color === this.selectCard.color && cell.value === this.selectCard.value) {
+                    this.showMessage(_('You are not allowed to place the same card, only a card at the same color or same value!'), 'error');
+                    return;
+                }
+
+                if (cell.color !== this.selectCard.color && cell.value !== this.selectCard.value) {
+                    this.showMessage(_('You need to select a card at the same color or same value!'), 'error');
+                    return;
+                }
+            }
+
+            this.ajaxcall(
+                '/tictacmatchleocaseiro/tictacmatchleocaseiro/playCard.html',
+                {
+                    lock: true,
+                    cellLocation: cell.cell,
+                    cardId: this.selectCard.id,
+                },
+                this,
+                function( result ) {
+                    // Do some stuff after a successful call
+                    // NB : usually not needed as changes must be handled by notifications
+                    // You should NOT modify the interface in a callback or it will most likely break the framework replays (or make it inaccurate)
+                    // You should NOT make another ajaxcall in a callback in order not to create race conditions
+                }
+            );
         },
 
         /* Example:

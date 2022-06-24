@@ -154,12 +154,12 @@ class tictacmatchleocaseiro extends Table
         // Setup grid with card on middle
         $initialCard = null;
         while ($initialCard == null) {
-            $drewedCard = $this->cards->pickCardForLocation('deck', 'boardgrid', 4);
+            $drewedCard = $this->cards->pickCardForLocation('deck', 'cell-4');
             if ($drewedCard['type'] === 'symbol') {
                 $initialCard = $drewedCard;
             } else {
                 // if action card, discard to draw another one.
-                $this->cards->moveCard( $drewedCard['id'], 'discardpile');
+                $this->cards->insertCardOnExtremePosition( $drewedCard['id'], 'discardpile', true);
             }
 		}
 
@@ -203,9 +203,12 @@ class tictacmatchleocaseiro extends Table
         $result['hand'] = $this->cards->getPlayerHand($current_player_id);
         $this->populateCardProperties($result['hand']);
 
-        // Cards on board grid // TODO maybe only keep top card from stack only
-        $result['boardgrid'] = $this->cards->getCardsInLocation('boardgrid');
-        $this->populateCardProperties($result['boardgrid']);
+        $result['boardgrid'] = [];
+        for ($i = 0; $i < 9; $i++) {
+            $card = $this->cards->getCardOnTop('cell-' . $i);
+            $this->addExtraCardPropertiesFromMaterial($card);
+            $result['boardgrid'][$i] = $card;
+        }
 
         // Cards on discardpile // TODO maybe only keep top card from stack only
         $result['discardpiletopcard'] = $this->cards->getCardOnTop('discardpile');
@@ -246,6 +249,10 @@ class tictacmatchleocaseiro extends Table
 ////////////
 
     function addExtraCardPropertiesFromMaterial(&$card) {
+        if (!isset($card)) {
+            return;
+        }
+
         $materialCard = $this->ttm_cards[$card['type_arg']];
 
         $card['class'] = $materialCard['class'];
@@ -254,8 +261,16 @@ class tictacmatchleocaseiro extends Table
     }
 
     function populateCardProperties(&$cards) {
+        if (!$cards) {
+            return;
+        }
+
         foreach($cards as $card_id => $card) {
-            $this->addExtraCardPropertiesFromMaterial($cards[$card_id]);
+            if (isset($cards) && isset($cards[$card_id])) {
+                $this->addExtraCardPropertiesFromMaterial($cards[$card_id]);
+            } else {
+                throw new BgaUserException(self::_('Card not found'));
+            }
         }
     }
 
@@ -274,31 +289,62 @@ class tictacmatchleocaseiro extends Table
         (note: each method below must match an input method in tictacmatchleocaseiro.action.php)
     */
 
-    /*
-
-    Example:
-
-    function playCard( $card_id )
+    function playCard( $cell_location, $card_id )
     {
         // Check that this is the player's turn and that it is a "possible action" at this game state (see states.inc.php)
         self::checkAction( 'playCard' );
 
         $player_id = self::getActivePlayerId();
 
-        // Add your game logic to play a card there
-        ...
+        $card_location = 'cell-' . $cell_location;
+        $playingGridCard = $this->cards->getCardOnTop($card_location);
+        $card = $this->cards->getCard($card_id);
+
+        $this->addExtraCardPropertiesFromMaterial($card);
+
+
+        if($playingGridCard) {
+            $this->addExtraCardPropertiesFromMaterial($playingGridCard);
+
+            if ($card['color'] === $playingGridCard['color'] && $card['value'] === $playingGridCard['value']) {
+                throw new BgaUserException(self::_('You are not allowed to place the same card, only a card at the same color or same value!'));
+                return;
+            }
+
+            if ($card['color'] !== $playingGridCard['color'] && $card['value'] !== $playingGridCard['value']) {
+                throw new BgaUserException(self::_('You need to select a card at the same color or same value!'));
+                return;
+            }
+        }
+
+        $this->cards->insertCardOnExtremePosition($card_id, $card_location, true);
+        $this->cards->pickCard('deck', $player_id);
 
         // Notify all players about the card played
-        self::notifyAllPlayers( "cardPlayed", clienttranslate( '${player_name} plays ${card_name}' ), array(
-            'player_id' => $player_id,
-            'player_name' => self::getActivePlayerName(),
-            'card_name' => $card_name,
-            'card_id' => $card_id
-        ) );
+        // self::notifyAllPlayers( "cardPlayed", clienttranslate( '${player_name} plays ${card_name}' ), array(
+        //     'player_id' => $player_id,
+        //     'player_name' => self::getActivePlayerName(),
+        //     'card_name' => $card_name,
+        //     'card_id' => $card_id
+        // ) );
 
+        $this->gamestate->nextState('nextPlayer');
     }
 
-    */
+    function playAction( $card_id )
+    {
+        // Check that this is the player's turn and that it is a "possible action" at this game state (see states.inc.php)
+        self::checkAction( 'playAction' );
+
+        $player_id = self::getActivePlayerId();
+
+        $card = $this->cards->getCard($card_id);
+        $this->addExtraCardPropertiesFromMaterial($card);
+        var_dump($card);
+
+
+        exit;
+    }
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -337,18 +383,11 @@ class tictacmatchleocaseiro extends Table
         The action method of state X is called everytime the current game state is set to X.
     */
 
-    /*
-
-    Example for game state "MyGameState":
-
-    function stMyGameState()
+    function stNextPlayer()
     {
-        // Do some stuff ...
-
-        // (very often) go to another gamestate
-        $this->gamestate->nextState( 'some_gamestate_transition' );
+        $this->activeNextPlayer();
+        $this->gamestate->nextState('playerTurn');
     }
-    */
 
 //////////////////////////////////////////////////////////////////////////////
 //////////// Zombie

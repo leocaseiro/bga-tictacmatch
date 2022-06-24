@@ -36,13 +36,13 @@
 
         <div class="ttm-board-grid">
             <!-- BEGIN boardgrid -->
-            <div id="js-board-cell--{i}" class="card card--empty"></div>
+            <div id="js-board-cell--{i}" data-cell={i} class="card card--empty"></div>
             <!-- END boardgrid -->
         </div>
 
         <div class="ttm-discard-pile whiteblock">
             <h3 class="ttm-title"><span class="translate">Discard</span></h3>
-            <div id="js-discard-pile-card" class="card"></div>
+            <div id="js-discard-pile-card" class="card card--empty"></div>
             <span id="js-discard-pile-badge" class="card-badge" title="4x">4x</span>
         </div>
     </div>
