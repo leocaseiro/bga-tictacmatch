@@ -29,7 +29,7 @@ function (dojo, declare) {
             // Example:
             // this.myGlobalValue = 0;
             this.playerHand = null;
-            this.selectedCardId = null;
+            this.selectedCard = {};
         },
 
         /*
@@ -63,17 +63,9 @@ function (dojo, declare) {
             // Deal cards to current player hand
             Object.entries(this.playerHand).forEach(([id, card]) => {
                 const domId = `js-card-${id}`;
-                const cardDiv = this.format_block('jstpl_card', {
-                    ID: domId,
-                    DATAID: id,
-                    CLASS: card.class,
-                    COLOR: card.color,
-                    CARDVALUE: card.value,
-                });
-
+                const cardDiv = self.getCardDiv(domId, id, card);
                 dojo.place(cardDiv, 'js-hand__cards');
                 this.addTooltip(domId, _(`${card.value} ${card.color}`), _('Click to select card'));
-
                 dojo.connect($(domId), 'onclick', this, this.onHandCardClick);
             });
 
@@ -90,13 +82,7 @@ function (dojo, declare) {
                 }
 
                 const domId = `js-board-cell--${i}`;
-                const cardDiv = this.format_block('jstpl_card', {
-                    ID: domId,
-                    DATAID: id,
-                    CLASS: card.class,
-                    COLOR: card.color,
-                    CARDVALUE: card.value,
-                });
+                const cardDiv = self.getCardDiv(domId, id, card);
                 this.removeTooltip(domId);
 
                 dojo.place(cardDiv, domId, 'replace');
@@ -114,14 +100,7 @@ function (dojo, declare) {
             // Show card on Discard Pile
             if (this.topDiscardPile) {
                 const domId = 'js-discard-pile-card';
-                const discardPileCardDiv = this.format_block('jstpl_card', {
-                    ID: domId,
-                    DATAID: this.topDiscardPile.id,
-                    CLASS: this.topDiscardPile.class,
-                    COLOR: this.topDiscardPile.color,
-                    CARDVALUE: this.topDiscardPile.value,
-                });
-
+                const discardPileCardDiv = self.getCardDiv(domId, this.topDiscardPile.id, this.topDiscardPile);
                 dojo.place(discardPileCardDiv, domId, 'replace');
                 this.addTooltip(domId, _('Discard Pile'), _('Click to discard card'));
             }
@@ -234,11 +213,108 @@ function (dojo, declare) {
             script.
 
         */
-       getTeamValue: function() {
+        getTeamValue: function() {
             const playerObj = this.gamedatas.players[this.player_id];
             return Number(playerObj.player_no) % 2 === 0 ? this.gamedatas.teams.even : this.gamedatas.teams.odd;
-       },
+        },
 
+        // used on Tisaac slide
+        isFastMode() {
+            return this.instantaneousMode;
+        },
+
+        // Tisaac slide function
+        slide(mobile, targetId, options = {}){
+            let config = Object.assign({
+              duration: 800,
+              delay:0,
+              destroy: false,
+              attach: true,
+              pos: null,
+              className: 'moving',
+              from: null,
+              clearPos: true,
+            }, options);
+
+            const newParent = config.attach? targetId : $(mobile).parentNode;
+            this.changeParent(mobile, 'game_play_area');
+            if(config.from != null)
+              this.placeOnObject(mobile, config.from);
+            dojo.style(mobile, "zIndex", 5000);
+            dojo.addClass(mobile, config.className);
+            return new Promise((resolve, reject) => {
+              const animation = config.pos == null? this.slideToObject(mobile, targetId, config.duration, config.delay)
+                : this.slideToObjectPos(mobile, targetId, config.pos.x, config.pos.y, config.duration, config.delay);
+
+              dojo.connect(animation, 'onEnd', () => {
+                dojo.style(mobile, "zIndex", null);
+                dojo.removeClass(mobile, config.className);
+                this.changeParent(mobile, newParent);
+                if(config.destroy)
+                  dojo.destroy(mobile);
+                if(config.clearPos)
+                  dojo.style(mobile, { top:null, left:null, position:null });
+                resolve();
+              });
+              animation.play();
+            });
+        },
+
+        // used on Tisaac slide
+        changeParent(mobile, new_parent, relation) {
+            if (mobile === null) {
+                console.error("attachToNewParent: mobile obj is null");
+                return;
+            }
+            if (new_parent === null) {
+                console.error("attachToNewParent: new_parent is null");
+                return;
+            }
+            if (typeof mobile == "string") {
+                mobile = $(mobile);
+            }
+            if (typeof new_parent == "string") {
+                new_parent = $(new_parent);
+            }
+            if (typeof relation == "undefined") {
+                relation = "last";
+            }
+            var src = dojo.position(mobile);
+            dojo.style(mobile, "position", "absolute");
+            dojo.place(mobile, new_parent, relation);
+            var tgt = dojo.position(mobile);
+            var box = dojo.marginBox(mobile);
+            var cbox = dojo.contentBox(mobile);
+            var left = box.l + src.x - tgt.x;
+            var top = box.t + src.y - tgt.y;
+            this.positionObjectDirectly(mobile, left, top);
+            box.l += box.w - cbox.w;
+            box.t += box.h - cbox.h;
+            return box;
+        },
+
+        // used on Tisaac slide
+        positionObjectDirectly(mobileObj, x, y) {
+            // do not remove this "dead" code some-how it makes difference
+            dojo.style(mobileObj, "left"); // bug? re-compute style
+            // console.log("place " + x + "," + y);
+            dojo.style(mobileObj, {
+                left: x + "px",
+                top: y + "px"
+            });
+            dojo.style(mobileObj, "left"); // bug? re-compute style
+        },
+
+        getCardDiv(domId, id, card) {
+            const cardDiv = this.format_block('jstpl_card', {
+                ID: domId,
+                DATAID: id,
+                CLASS: card.class,
+                COLOR: card.color,
+                CARDVALUE: card.value,
+            });
+            return cardDiv;
+        },
 
         ///////////////////////////////////////////////////
         //// Player's action
@@ -260,14 +336,14 @@ function (dojo, declare) {
             if (!this.checkAction('playCard', true)) {
                 return;
             }
-            this.selectCard = e.target.dataset;
+            this.selectedCard = e.target.dataset;
 
-            if (this.selectCard.color === 'action') {
+            if (this.selectedCard.color === 'action') {
                 this.ajaxcall(
                     '/tictacmatchleocaseiro/tictacmatchleocaseiro/playAction.html',
                     {
                         lock: true,
-                        cardId: this.selectCard.id,
+                        cardId: this.selectedCard.id,
                     },
                     this,
                     function( result ) {
@@ -285,7 +361,7 @@ function (dojo, declare) {
                 return;
             }
 
-            if (!this.selectCard) {
+            if (!this.selectedCard) {
                 this.showMessage(_('Please select a card from your hand!'), 'error');
             }
 
@@ -293,12 +369,12 @@ function (dojo, declare) {
 
             // empty cell or same color and not same value
             if (cell.id) {
-                if (cell.color === this.selectCard.color && cell.value === this.selectCard.value) {
+                if (cell.color === this.selectedCard.color && cell.value === this.selectedCard.value) {
                     this.showMessage(_('You are not allowed to place the same card, only a card at the same color or same value!'), 'error');
                     return;
                 }
 
-                if (cell.color !== this.selectCard.color && cell.value !== this.selectCard.value) {
+                if (cell.color !== this.selectedCard.color && cell.value !== this.selectedCard.value) {
                     this.showMessage(_('You need to select a card at the same color or same value!'), 'error');
                     return;
                 }
@@ -309,10 +385,11 @@ function (dojo, declare) {
                 {
                     lock: true,
                     cellLocation: cell.cell,
-                    cardId: this.selectCard.id,
+                    cardId: this.selectedCard.id,
                 },
                 this,
                 function( result ) {
+                    console.log('resutl'. result);
                     // Do some stuff after a successful call
                     // NB : usually not needed as changes must be handled by notifications
                     // You should NOT modify the interface in a callback or it will most likely break the framework replays (or make it inaccurate)
@@ -375,7 +452,9 @@ function (dojo, declare) {
             // TODO: here, associate your game notifications with local methods
 
             // Example 1: standard notification handling
-            // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
+            dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
+            dojo.subscribe( 'actionPlayed', this, "notif_actionPlayed" );
+            dojo.subscribe( 'drawSelfCard', this, "notif_drawSelfCard" );
 
             // Example 2: standard notification handling + tell the user interface to wait
             //            during 3 seconds after calling the method in order to let the players
@@ -383,9 +462,83 @@ function (dojo, declare) {
             // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
             // this.notifqueue.setSynchronous( 'cardPlayed', 3000 );
             //
+            this.notifqueue.setSynchronous("drawCard", 800);
+            this.notifqueue.setSynchronous("drawSelfCard", 500);
         },
 
-        // TODO: from this point and below, you can write your game notifications handling methods
+        notif_cardPlayed: function( notif )
+        {
+            console.log( 'notif_cardPlayed' );
+            console.log( notif );
+            const card = notif.args.card;
+            const player_id = notif.args.player_id;
+            const destinationSelector = `js-board-cell--${notif.args.cell_location}`;
+            let cardSelector = `js-card-${card.id}`;
+            const isCardAvailable = $(cardSelector);
+
+            if (!isCardAvailable) {
+                //create card on player board;
+                const cardDiv = this.getCardDiv(cardSelector, card.id, card);
+                dojo.place(cardDiv, `overall_player_board_${player_id}`);
+            } else {
+                // reset selectedCard
+                this.selectedCard = {};
+            }
+
+            this.slide(cardSelector, destinationSelector);
+
+
+            // Note: notif.args contains the arguments specified during you "notifyAllPlayers" / "notifyPlayer" PHP call
+
+            // TODO: play the card in the user interface.
+        },
+
+        notif_actionPlayed: function( notif )
+        {
+            console.log( 'notif_actionPlayed' );
+            console.log( notif );
+            const card = notif.args.card;
+            const player_id = notif.args.player_id;
+            const destinationSelector = 'js-discard-pile-card';
+            let cardSelector = `js-card-${card.id}`;
+            const isCardAvailable = $(cardSelector);
+
+            if (!isCardAvailable) {
+                //create card on player board;
+                const cardDiv = this.getCardDiv(cardSelector, card.id, card);
+                dojo.place(cardDiv, `overall_player_board_${player_id}`);
+            } else {
+                // reset selectedCard
+                this.selectedCard = {};
+            }
+
+            this.slide(cardSelector, destinationSelector);
+            // update discard pile number
+
+            // Note: notif.args contains the arguments specified during you "notifyAllPlayers" / "notifyPlayer" PHP call
+
+            // TODO: play the card in the user interface.
+        },
+
+        notif_drawSelfCard: function( notif )
+        {
+            console.log( 'notif_drawSelfCard' );
+            console.log( notif );
+            const card = notif.args.card;
+            const destinationSelector = 'js-hand__cards';
+            let cardSelector = `js-card-${card.id}`;
+
+            //create card on player board;
+            const cardDiv = this.getCardDiv(cardSelector, card.id, card);
+            dojo.place(cardDiv, 'js-deck');
+
+            this.slide(cardSelector, destinationSelector);
+            // update discard pile number
+
+            // Note: notif.args contains the arguments specified during you "notifyAllPlayers" / "notifyPlayer" PHP call
+
+            // TODO: play the card in the user interface.
+        },
 
         /*
         Example:

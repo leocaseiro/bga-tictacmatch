@@ -30,7 +30,7 @@
     <div class="ttm-table">
         <div class="ttm-deck whiteblock">
             <h3 class="ttm-title">Deck</h3>
-            <div class="card card--back"></div>
+            <div id="js-deck" class="card card--back"></div>
             <span id="js-deck-badge" class="card-badge" title="20x">20x</span>
         </div>
 

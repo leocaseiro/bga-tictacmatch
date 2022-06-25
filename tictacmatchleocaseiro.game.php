@@ -318,15 +318,34 @@ class tictacmatchleocaseiro extends Table
         }
 
         $this->cards->insertCardOnExtremePosition($card_id, $card_location, true);
-        $this->cards->pickCard('deck', $player_id);
+        $card_name = $card['value'] . ' ' . $card['color'];
 
         // Notify all players about the card played
-        // self::notifyAllPlayers( "cardPlayed", clienttranslate( '${player_name} plays ${card_name}' ), array(
-        //     'player_id' => $player_id,
-        //     'player_name' => self::getActivePlayerName(),
-        //     'card_name' => $card_name,
-        //     'card_id' => $card_id
-        // ) );
+        self::notifyAllPlayers( "cardPlayed", clienttranslate( '${player_name} plays ${card_name}' ), array(
+            'player_id' => $player_id,
+            'player_name' => self::getActivePlayerName(),
+            'card_name' => $card_name,
+            'card' => $card,
+            'cell_location' => $cell_location
+            )
+        );
+
+        // Draw a new card to player
+        $newCard = $this->cards->pickCard('deck', $player_id);
+        $this->addExtraCardPropertiesFromMaterial($newCard);
+        $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
+        // Notify all players about the drawing card
+        self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
+            'player_name' => self::getActivePlayerName(),
+        ));
+
+        // Notify player about the new card
+        self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
+            'player_id' => $player_id,
+            'player_name' => self::getActivePlayerName(),
+            'card_name' => $newCard_name,
+            'card' => $newCard,
+        ));
 
         $this->gamestate->nextState('nextPlayer');
     }
@@ -340,10 +359,38 @@ class tictacmatchleocaseiro extends Table
 
         $card = $this->cards->getCard($card_id);
         $this->addExtraCardPropertiesFromMaterial($card);
-        var_dump($card);
 
+        $this->cards->insertCardOnExtremePosition($card_id, 'discardpile', true);
 
-        exit;
+        $this->cards->pickCard('deck', $player_id);
+        $card_name = $card['value'];
+
+        // Notify all players about the card played
+        self::notifyAllPlayers( "actionPlayed", clienttranslate( '${player_name} plays ${card_name}' ), array(
+            'player_id' => $player_id,
+            'player_name' => self::getActivePlayerName(),
+            'card_name' => $card_name,
+            'card' => $card
+        ) );
+
+        // Draw a new card to player
+        $newCard = $this->cards->pickCard('deck', $player_id);
+        $this->addExtraCardPropertiesFromMaterial($newCard);
+        $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
+        // Notify all players about the drawing card
+        self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
+            'player_name' => self::getActivePlayerName(),
+        ));
+
+        // Notify player about the new card
+        self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
+            'player_id' => $player_id,
+            'player_name' => self::getActivePlayerName(),
+            'card_name' => $newCard_name,
+            'card' => $newCard,
+        ));
+
+        $this->gamestate->nextState('nextPlayer');
     }
 
 
