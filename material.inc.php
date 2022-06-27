@@ -88,7 +88,7 @@ $this->ttm_cards = [
     'type' => 'action',
     'type_arg' => 8,
     'nbr' => 4,
-    'class' => 'action_flip',
+    'class' => 'action_2plus',
     'color' => 'action',
     'value' => 'double play card'
   ],
@@ -96,7 +96,7 @@ $this->ttm_cards = [
     'type' => 'action',
     'type_arg' => 9,
     'nbr' => 4,
-    'class' => 'action_2plus',
+    'class' => 'action_flip',
     'color' => 'action',
     'value' => 'flip card'
   ],

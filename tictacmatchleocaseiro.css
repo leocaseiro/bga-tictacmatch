@@ -144,6 +144,36 @@
   z-index: -2;
 }
 
+/* Flip card */
+.ttm-hand__team {
+    perspective: 1000px;
+}
+.card-flip {
+    position: relative;
+    transform-style: preserve-3d;
+    width: calc(var(--tictacmatchCardWidth) * var(--tictacmatchCardScale));
+    height: calc(var(--tictacmatchCardHeight) * var(--tictacmatchCardScale));
+    transition: transform 1.5s;
+    transform-style: preserve-3d;
+}
+.card-flip__front-o, .card-flip__back-x {
+    position: absolute;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -ms-backface-visibility: hidden;
+}
+.card-flip__back-x {
+    transform: rotateY(180deg);
+}
+.card-flip--flipped-o {
+    transform: rotateY(0deg);
+}
+.card-flip--flipped-x {
+    transform: rotateY(180deg);
+}
+
+/* Card Sprites */
 .card--blue_x {
     background-position: -0 -0;
 }

@@ -26,6 +26,8 @@ class tictacmatchleocaseiro extends Table
 	const TEAM_1_4 = 3;
 	const TEAM_RANDOM = 4;
 
+    const TEAM_EVEN = 'evens_team';
+    const TEAM_ODD = 'odds_team';
     const TEAM_O = 0;
     const TEAM_X = 10;
 
@@ -42,8 +44,8 @@ class tictacmatchleocaseiro extends Table
 
         self::initGameStateLabels( array(
             'playerTeams' => 100,
-            'odds_team' => 101,
-            'evens_team' => 102,
+            self::TEAM_ODD => 101,
+            self::TEAM_EVEN => 102,
         ) );
         $this->cards = self::getNew( "module.common.deck" );
         $this->cards->init( "card" );
@@ -165,12 +167,13 @@ class tictacmatchleocaseiro extends Table
 
         // Set symbol for players (first player has opposite side as the table on first draw)
         $this->addExtraCardPropertiesFromMaterial($initialCard);
+        $this->addExtraCardPropertiesFromMaterial($initialCard);
         if ($initialCard['value'] === 'X') {
-            self::setGameStateInitialValue( 'evens_team', self::TEAM_O );
-            self::setGameStateInitialValue( 'odds_team', self::TEAM_X );
+            self::setGameStateInitialValue( self::TEAM_EVEN, self::TEAM_O );
+            self::setGameStateInitialValue( self::TEAM_ODD, self::TEAM_X );
         } else {
-            self::setGameStateInitialValue( 'evens_team', self::TEAM_X );
-            self::setGameStateInitialValue( 'odds_team', self::TEAM_O );
+            self::setGameStateInitialValue( self::TEAM_EVEN, self::TEAM_X );
+            self::setGameStateInitialValue( self::TEAM_ODD, self::TEAM_O );
         }
 
         // Activate first player (which is in general a good idea :) )
@@ -219,8 +222,8 @@ class tictacmatchleocaseiro extends Table
 
         // Get teams
         $result['teams'] = [
-            'even' => $this->getTeamValue(self::getGameStateValue('evens_team')),
-            'odd' => $this->getTeamValue(self::getGameStateValue('odds_team'))
+            'even' => $this->getTeamValue(self::getGameStateValue(self::TEAM_EVEN)),
+            'odd' => $this->getTeamValue(self::getGameStateValue(self::TEAM_ODD))
         ];
 
         return $result;
@@ -278,7 +281,15 @@ class tictacmatchleocaseiro extends Table
         return $stateId == 10 ? 'X' : 'O';
     }
 
-
+    function toggleTeam() {
+        if (self::getGameStateValue(self::TEAM_EVEN) == self::TEAM_X) {
+            self::setGameStateValue( self::TEAM_EVEN, self::TEAM_O );
+            self::setGameStateValue( self::TEAM_ODD, self::TEAM_X );
+        } else {
+            self::setGameStateValue( self::TEAM_EVEN, self::TEAM_X );
+            self::setGameStateValue( self::TEAM_ODD, self::TEAM_O );
+        }
+    }
 
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
@@ -360,9 +371,19 @@ class tictacmatchleocaseiro extends Table
         $card = $this->cards->getCard($card_id);
         $this->addExtraCardPropertiesFromMaterial($card);
 
-        $this->cards->insertCardOnExtremePosition($card_id, 'discardpile', true);
+        // Do Action
+        switch ($card['class']) {
+            // Flip card
+            case 'action_flip':
+                $this->toggleTeam();
+                break;
+            case 'action_2plus':
+                break;
+            case 'action_wipe_out':
+                break;
+        }
 
-        $this->cards->pickCard('deck', $player_id);
+        $this->cards->insertCardOnExtremePosition($card_id, 'discardpile', true);
         $card_name = $card['value'];
 
         // Notify all players about the card played

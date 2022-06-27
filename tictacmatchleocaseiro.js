@@ -111,8 +111,8 @@ function (dojo, declare) {
             discardPileBadge.setAttribute('title', discardTotal);
             discardPileBadge.innerText = discardTotal;
 
-            // Show player team card
-            const teamCardClass = `card--team_${this.getTeamValue().toLowerCase()}`;
+            // Show player team card // TODO Flip correct side
+            const teamCardClass = `card-flip--flipped-${this.getTeamValue().toLowerCase()}`;
             dojo.replaceClass('js-team-card', teamCardClass, 'card--empty');
 
             // Setup game notifications to handle (see "setupNotifications" method below)
@@ -486,11 +486,7 @@ function (dojo, declare) {
             }
 
             this.slide(cardSelector, destinationSelector);
-
-
-            // Note: notif.args contains the arguments specified during you "notifyAllPlayers" / "notifyPlayer" PHP call
-
-            // TODO: play the card in the user interface.
+            // TODO replace cell with card and add event listeners
         },
 
         notif_actionPlayed: function( notif )
@@ -513,11 +509,7 @@ function (dojo, declare) {
             }
 
             this.slide(cardSelector, destinationSelector);
-            // update discard pile number
-
-            // Note: notif.args contains the arguments specified during you "notifyAllPlayers" / "notifyPlayer" PHP call
-
-            // TODO: play the card in the user interface.
+            // TODO update discard pile number, and replace DOM element (remove multiple cards)
         },
 
         notif_drawSelfCard: function( notif )
@@ -533,26 +525,7 @@ function (dojo, declare) {
             dojo.place(cardDiv, 'js-deck');
 
             this.slide(cardSelector, destinationSelector);
-            // update discard pile number
-
-            // Note: notif.args contains the arguments specified during you "notifyAllPlayers" / "notifyPlayer" PHP call
-
-            // TODO: play the card in the user interface.
+            // TODO update draw number
         },
-
-        /*
-        Example:
-
-        notif_cardPlayed: function( notif )
-        {
-            console.log( 'notif_cardPlayed' );
-            console.log( notif );
-
-            // Note: notif.args contains the arguments specified during you "notifyAllPlayers" / "notifyPlayer" PHP call
-
-            // TODO: play the card in the user interface.
-        },
-
-        */
    });
 });
