@@ -30,6 +30,10 @@ class tictacmatchleocaseiro extends Table
     const TEAM_ODD = 'odds_team';
     const TEAM_O = 0;
     const TEAM_X = 10;
+    const TEAM_X_STRING = 'X';
+    const TEAM_O_STRING = 'O';
+
+    const HAS_WINNER = 'has_winner';
 
 
 	function __construct( )
@@ -46,6 +50,7 @@ class tictacmatchleocaseiro extends Table
             'playerTeams' => 100,
             self::TEAM_ODD => 101,
             self::TEAM_EVEN => 102,
+            self::HAS_WINNER => 103,
         ) );
         $this->cards = self::getNew( "module.common.deck" );
         $this->cards->init( "card" );
@@ -140,6 +145,7 @@ class tictacmatchleocaseiro extends Table
         //self::initStat( 'player', 'player_teststat1', 0 );  // Init a player statistics (for all players)
 
         // setup the initial game situation here
+        self::setGameStateInitialValue( self::HAS_WINNER, false );
 
         // Create cards
         $this->cards->createCards($this->ttm_cards, 'deck');
@@ -168,7 +174,7 @@ class tictacmatchleocaseiro extends Table
         // Set symbol for players (first player has opposite side as the table on first draw)
         $this->addExtraCardPropertiesFromMaterial($initialCard);
         $this->addExtraCardPropertiesFromMaterial($initialCard);
-        if ($initialCard['value'] === 'X') {
+        if ($initialCard['value'] === self::TEAM_X_STRING) {
             self::setGameStateInitialValue( self::TEAM_EVEN, self::TEAM_O );
             self::setGameStateInitialValue( self::TEAM_ODD, self::TEAM_X );
         } else {
@@ -278,7 +284,7 @@ class tictacmatchleocaseiro extends Table
     }
 
     function getTeamValue($stateId) {
-        return $stateId == 10 ? 'X' : 'O';
+        return $stateId == self::TEAM_X ? self::TEAM_X_STRING : self::TEAM_O_STRING;
     }
 
     function toggleTeam() {
@@ -288,6 +294,67 @@ class tictacmatchleocaseiro extends Table
         } else {
             self::setGameStateValue( self::TEAM_EVEN, self::TEAM_X );
             self::setGameStateValue( self::TEAM_ODD, self::TEAM_O );
+        }
+    }
+
+    function checkWinner() {
+        // 0, 1, 2,
+        // 3, 4, 5,
+        // 6, 7, 8,
+        $matches = [
+            // horizontally
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            // vertically
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            // diagonally
+            [0, 4, 8],
+            // anti-diagonally
+            [2, 4, 6],
+        ];
+
+        $boardgrid = [];
+        foreach ($matches as $row) {
+            foreach ($row as $index) {
+                if (!isset($boardgrid[$index]) || !is_null($boardgrid[$index])) {
+                    $card = $this->cards->getCardOnTop('cell-' . $index);
+                    $boardgrid[$index] = $card;
+                }
+            }
+            if (
+                !is_null($boardgrid[$row[0]]) && isset($boardgrid[$row[0]]['type_arg']) &&
+                !is_null($boardgrid[$row[1]]) && isset($boardgrid[$row[1]]['type_arg']) &&
+                !is_null($boardgrid[$row[2]]) && isset($boardgrid[$row[2]]['type_arg'])
+            ) {
+                if ($boardgrid[$row[0]]['type_arg'] == $boardgrid[$row[1]]['type_arg'] && $boardgrid[$row[1]]['type_arg'] == $boardgrid[$row[2]]['type_arg']) {
+                    $card = $boardgrid[$row[0]];
+                    $this->addExtraCardPropertiesFromMaterial($card);
+                    return $card['value'];
+                }
+            }
+        }
+
+
+        return false;
+    }
+
+    function setWinnerScore($playerId) {
+        if ($playerId) {
+            $sql = "UPDATE player SET player_score = 1 WHERE player_id = '$playerId'";
+            self::DbQuery($sql);
+        }
+    }
+
+    function setWinners($winner) {
+        $players = self::loadPlayersBasicInfos();
+        $winners_no = self::getGameStateValue(self::TEAM_EVEN) == $winner ? [0, 2] : [1, 3];
+        foreach ($players as $player) {
+            if (in_array($player['player_no'], $winners_no)) {
+                $this->setWinnerScore($player['player_id']);
+            }
         }
     }
 
@@ -340,6 +407,13 @@ class tictacmatchleocaseiro extends Table
             'cell_location' => $cell_location
             )
         );
+
+        if ($winner = $this->checkWinner()) {
+            $this->setWinners($winner);
+            self::setGameStateValue(self::HAS_WINNER, true);
+            $this->gamestate->nextState('nextPlayer');
+            return;
+        }
 
         // Draw a new card to player
         $newCard = $this->cards->pickCard('deck', $player_id);
@@ -406,6 +480,13 @@ class tictacmatchleocaseiro extends Table
             'action' => $action,
         ) );
 
+        if ($winner = $this->checkWinner()) {
+            $this->setWinners($winner);
+            self::setGameStateValue(self::HAS_WINNER, true);
+            $this->gamestate->nextState('nextPlayer');
+            return;
+        }
+
         // Draw a new card to player
         $newCard = $this->cards->pickCard('deck', $player_id);
         if ($newCard) {
@@ -469,8 +550,12 @@ class tictacmatchleocaseiro extends Table
 
     function stNextPlayer()
     {
-        $this->activeNextPlayer();
-        $this->gamestate->nextState('playerTurn');
+        if (self::getGameStateValue(self::HAS_WINNER)) {
+            $this->gamestate->nextState('endGame');
+        } else {
+            $this->activeNextPlayer();
+            $this->gamestate->nextState('playerTurn');
+        }
     }
 
 //////////////////////////////////////////////////////////////////////////////
