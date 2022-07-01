@@ -83,9 +83,10 @@
 
         // Retrieve arguments
         $cardId = self::getArg( "cardId", AT_posint, true );
+        $playerChosen = self::getArg( "playerChosen", AT_posint, false );
 
         // Then, call the appropriate method in your game logic, like "playCard" or "myAction"
-        $this->game->playAction( $cardId );
+        $this->game->playAction( $cardId, $playerChosen );
 
         self::ajaxResponse( );
     }

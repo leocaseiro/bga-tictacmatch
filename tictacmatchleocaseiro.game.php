@@ -35,6 +35,8 @@ class tictacmatchleocaseiro extends Table
 
     const HAS_WINNER = 'has_winner';
 
+    const WIPE_CARDS_FROM = 'wipe_cards_from';
+
 
 	function __construct( )
 	{
@@ -51,6 +53,7 @@ class tictacmatchleocaseiro extends Table
             self::TEAM_ODD => 101,
             self::TEAM_EVEN => 102,
             self::HAS_WINNER => 103,
+            self::WIPE_CARDS_FROM => 104,
         ) );
         $this->cards = self::getNew( "module.common.deck" );
         $this->cards->init( "card" );
@@ -297,6 +300,36 @@ class tictacmatchleocaseiro extends Table
         }
     }
 
+    function wipeCards($player_id) {
+        $player_name = self::getActivePlayerName();
+        $player_from = self::getPlayerNameById($player_id);
+        $this->setGameStateValue(self::WIPE_CARDS_FROM, $player_id);
+        $cards = $this->cards->getCardsInLocation('hand', $player_id);
+        $this->populateCardProperties($cards);
+        $this->cards->moveAllCardsInLocation('hand', 'discardpile', $player_id, 0);
+
+        // Notify all players about the wiped out
+        self::notifyAllPlayers( "wipedOut", clienttranslate( '${player_name} wiped cards from ${player_from}' ), array(
+            'player_name' => $player_name,
+            'player_from' => $player_from,
+            'player_id' => $player_id,
+            'cards' => $cards,
+            'totalcardsondiscardpile' => $this->cards->countCardInLocation('discardpile'),
+        ));
+
+        // Notify player about the new 4 cards
+        for ($i = 0; $i < 4; $i++) {
+            // Draw a new card to player
+            $newCard = $this->cards->pickCard('deck', $player_id);
+            $this->addExtraCardPropertiesFromMaterial($newCard);
+            $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
+            self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
+                'card_name' => $newCard_name,
+                'card' => $newCard
+            ));
+        }
+    }
+
     function checkWinner() {
         // 0, 1, 2,
         // 3, 4, 5,
@@ -471,8 +504,6 @@ class tictacmatchleocaseiro extends Table
 
         // Notify player about the new card
         self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
-            'player_id' => $player_id,
-            'player_name' => self::getActivePlayerName(),
             'card_name' => $newCard_name,
             'card' => $newCard
         ));
@@ -484,7 +515,7 @@ class tictacmatchleocaseiro extends Table
         $this->gamestate->nextState('nextPlayer');
     }
 
-    function playAction( $card_id )
+    function playAction( $card_id, $playerChosen )
     {
         // Check that this is the player's turn and that it is a "possible action" at this game state (see states.inc.php)
         self::checkAction( 'playAction' );
@@ -496,6 +527,8 @@ class tictacmatchleocaseiro extends Table
         $action = [
             'name' => $card['class']
         ];
+
+        $do_action = false;
 
         // Do Action
         switch ($card['class']) {
@@ -510,6 +543,7 @@ class tictacmatchleocaseiro extends Table
             case 'action_2plus':
                 break;
             case 'action_wipe_out':
+                $do_action = 'action_wipe_out';
                 break;
         }
 
@@ -547,14 +581,16 @@ class tictacmatchleocaseiro extends Table
 
         // Notify player about the new card
         self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
-            'player_id' => $player_id,
-            'player_name' => self::getActivePlayerName(),
             'card_name' => $newCard_name,
             'card' => $newCard,
         ));
 
         if ($totalcardsondeck == 0) {
             $this->reShuffleDeck();
+        }
+
+        if ($do_action == 'action_wipe_out') {
+            $this->wipeCards($playerChosen);
         }
 
         $this->gamestate->nextState('nextPlayer');
@@ -601,6 +637,10 @@ class tictacmatchleocaseiro extends Table
     {
         if (self::getGameStateValue(self::HAS_WINNER)) {
             $this->gamestate->nextState('endGame');
+        } elseif ($player_id = self::getGameStateValue(self::WIPE_CARDS_FROM)) {
+            self::setGameStateValue(self::WIPE_CARDS_FROM, 0);
+            $this->gamestate->changeActivePlayer( $player_id );
+            $this->gamestate->nextState('playerTurn');
         } else {
             $this->activeNextPlayer();
             $this->gamestate->nextState('playerTurn');

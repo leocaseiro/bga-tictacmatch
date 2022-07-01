@@ -380,20 +380,37 @@ function (dojo, declare) {
             this.selectedCard = e.target.dataset;
 
             if (this.selectedCard.color === 'action') {
-                this.ajaxcall(
-                    '/tictacmatchleocaseiro/tictacmatchleocaseiro/playAction.html',
-                    {
-                        lock: true,
-                        cardId: this.selectedCard.id,
-                    },
-                    this,
-                    function( result ) {
-                        // Do some stuff after a successful call
-                        // NB : usually not needed as changes must be handled by notifications
-                        // You should NOT modify the interface in a callback or it will most likely break the framework replays (or make it inaccurate)
-                        // You should NOT make another ajaxcall in a callback in order not to create race conditions
-                    }
-                );
+                switch (this.selectedCard.value) {
+                    case 'wipe out card':
+                        const keys = Object.values(this.gamedatas.players)
+                            .filter(player => player.id != this.getCurrentPlayerId())
+                            .map(player => player.name);
+                        this.multipleChoiceDialog(
+                            _('Choose a player to wipe cards out:'), keys,
+                            (choice) => {
+                                const playerChosenName = keys[choice];
+                                const playerChosen = Object.values(this.gamedatas.players)
+                                    .find(player => player.name == playerChosenName);
+                                this.ajaxcall( '/tictacmatchleocaseiro/tictacmatchleocaseiro/playAction.html', {
+                                    lock: true,
+                                    cardId: this.selectedCard.id,
+                                    playerChosen: playerChosen.id
+                                }, this);
+                            }
+                        );
+                        break;
+                    case 'flip card':
+                    case 'double play card':
+                    default:
+                        this.ajaxcall(
+                            '/tictacmatchleocaseiro/tictacmatchleocaseiro/playAction.html',
+                            {
+                                lock: true,
+                                cardId: this.selectedCard.id,
+                            }, this
+                        );
+                        break;
+                }
             }
         },
 
@@ -404,6 +421,12 @@ function (dojo, declare) {
 
             if (!this.selectedCard) {
                 this.showMessage(_('Please select a card from your hand!'), 'error');
+                return;
+            }
+
+            if (this.selectedCard.color === 'action') {
+                this.showMessage(_('Please select a symbol card!'), 'error');
+                return;
             }
 
             const cell = e.target.dataset;
@@ -499,6 +522,7 @@ function (dojo, declare) {
             dojo.subscribe( 'drawSelfCard', this, "notif_drawSelfCard" );
             dojo.subscribe( 'moveCardsToDeck', this, "notif_moveCardsToDeck" );
             dojo.subscribe( 'reShuffleDeck', this, "notif_reShuffleDeck" );
+            dojo.subscribe( 'wipedOut', this, "notif_wipedOut" );
 
             // Example 2: standard notification handling + tell the user interface to wait
             //            during 3 seconds after calling the method in order to let the players
@@ -506,6 +530,7 @@ function (dojo, declare) {
             // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
             // this.notifqueue.setSynchronous( 'cardPlayed', 3000 );
             //
+            this.notifqueue.setSynchronous("wipedOut", 500);
             this.notifqueue.setSynchronous("drawCard", 800);
             this.notifqueue.setSynchronous("drawSelfCard", 500);
             this.notifqueue.setSynchronous("moveCardsToDeck", 500);
@@ -629,5 +654,36 @@ function (dojo, declare) {
                 dojo.setAttr('js-deck', 'class', 'card card--back');
             }
         },
+
+        notif_wipedOut: function ( notif )
+        {
+            console.log( 'notif_wipedOut' );
+            console.log( notif );
+            const cards = notif.args.cards;
+            const destinationSelector = 'js-discard-pile-card';
+            const player_id = notif.args.player_id;
+
+            Object.values(cards).forEach((card) => {
+                const duration = this.randomInteger(500, 1200);
+                let cardSelector = `js-card-${card.id}`;
+                const isCardAvailable = $(cardSelector);
+                // wipe all current cards
+                if (!isCardAvailable) {
+                    //create card on player board;
+                    const cardDiv = this.getCardDiv(cardSelector, card.id, card);
+                    dojo.place(cardDiv, `overall_player_board_${player_id}`);
+                } else {
+                    // reset selectedCard
+                    this.selectedCard = {};
+                }
+
+                this.slide(cardSelector, destinationSelector, { duration: duration }).then(() => {
+                    this.replaceCardOnDiscardPile(card);
+                    dojo.destroy(cardSelector);
+                });
+
+                this.setNumberOfCardsOnBadge(notif.args.totalcardsondiscardpile, 'js-discard-pile-badge');
+            });
+        }
    });
 });
