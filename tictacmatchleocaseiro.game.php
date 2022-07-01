@@ -343,20 +343,24 @@ class tictacmatchleocaseiro extends Table
 
         // Draw a new card to player
         $newCard = $this->cards->pickCard('deck', $player_id);
-        $this->addExtraCardPropertiesFromMaterial($newCard);
-        $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
-        // Notify all players about the drawing card
-        self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
-            'player_name' => self::getActivePlayerName(),
-        ));
+        if ($newCard) {
+            $this->addExtraCardPropertiesFromMaterial($newCard);
+            $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
 
-        // Notify player about the new card
-        self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
-            'player_id' => $player_id,
-            'player_name' => self::getActivePlayerName(),
-            'card_name' => $newCard_name,
-            'card' => $newCard,
-        ));
+            // Notify all players about the drawing card
+            self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
+                'player_name' => self::getActivePlayerName(),
+                'totalcardsondeck' => $this->cards->countCardInLocation('deck'),
+            ));
+
+            // Notify player about the new card
+            self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
+                'player_id' => $player_id,
+                'player_name' => self::getActivePlayerName(),
+                'card_name' => $newCard_name,
+                'card' => $newCard
+            ));
+        }
 
         $this->gamestate->nextState('nextPlayer');
     }
@@ -396,20 +400,24 @@ class tictacmatchleocaseiro extends Table
 
         // Draw a new card to player
         $newCard = $this->cards->pickCard('deck', $player_id);
-        $this->addExtraCardPropertiesFromMaterial($newCard);
-        $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
-        // Notify all players about the drawing card
-        self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
-            'player_name' => self::getActivePlayerName(),
-        ));
+        if ($newCard) {
+            $this->addExtraCardPropertiesFromMaterial($newCard);
+            $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
+            // Notify all players about the drawing card
+            self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
+                'player_name' => self::getActivePlayerName(),
+                'totalcardsondeck' => $this->cards->countCardInLocation('deck'),
+                'totalcardsondiscardpile' => $this->cards->countCardInLocation('discardpile')
+            ));
 
-        // Notify player about the new card
-        self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
-            'player_id' => $player_id,
-            'player_name' => self::getActivePlayerName(),
-            'card_name' => $newCard_name,
-            'card' => $newCard,
-        ));
+            // Notify player about the new card
+            self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
+                'player_id' => $player_id,
+                'player_name' => self::getActivePlayerName(),
+                'card_name' => $newCard_name,
+                'card' => $newCard,
+            ));
+        }
 
         $this->gamestate->nextState('nextPlayer');
     }

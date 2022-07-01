@@ -16,9 +16,11 @@
  */
 
 define([
-    "dojo","dojo/_base/declare",
+    "dojo",
+    "dojo/_base/declare",
+    "dojo/NodeList-traverse",
     "ebg/core/gamegui",
-    "ebg/counter"
+    "ebg/counter",
 ],
 function (dojo, declare) {
     return declare("bgagame.tictacmatchleocaseiro", ebg.core.gamegui, {
@@ -92,10 +94,7 @@ function (dojo, declare) {
             });
 
             // Show number of cards on deck
-            const deckTotal = `${this.gamedatas.totalcardsondeck}x`;
-            const deckBadge = document.getElementById('js-deck-badge');
-            deckBadge.setAttribute('title', deckTotal);
-            deckBadge.innerText = deckTotal;
+            self.setNumberOfCardsOnBadge(self.gamedatas.totalcardsondeck, 'js-deck-badge');
 
             // Show card on Discard Pile
             if (this.topDiscardPile) {
@@ -106,10 +105,7 @@ function (dojo, declare) {
             }
 
             // Show number of cards on Discard Pile
-            const discardTotal = `${this.gamedatas.totalcardsondiscardpile}x`;
-            const discardPileBadge = document.getElementById('js-discard-pile-badge');
-            discardPileBadge.setAttribute('title', discardTotal);
-            discardPileBadge.innerText = discardTotal;
+            self.setNumberOfCardsOnBadge(self.gamedatas.totalcardsondiscardpile, 'js-discard-pile-badge');
 
             // Show player team card // TODO Flip correct side
             const teamCardClass = `card-flip--flipped-${this.getTeamValue().toLowerCase()}`;
@@ -216,6 +212,43 @@ function (dojo, declare) {
         getTeamValue: function() {
             const playerObj = this.gamedatas.players[this.player_id];
             return Number(playerObj.player_no) % 2 === 0 ? this.gamedatas.teams.even : this.gamedatas.teams.odd;
+        },
+
+        setNumberOfCardsOnBadge: function(n, badgeId) {
+            const deckTotal = `${n}x`;
+            const deckBadge = document.getElementById(badgeId);
+            setTimeout(() => {
+                deckBadge.setAttribute('title', deckTotal);
+                deckBadge.innerText = deckTotal;
+
+                if (n == 0) {
+                    const card = dojo.query(`#${badgeId}`).siblings('.card')[0];
+                    if (card) {
+                        dojo.setAttr(card, 'class', 'card card--empty');
+                    }
+                }
+            }, 1000);
+        },
+
+        replaceCardAttributes: function(card, domId) {
+            const el = $(domId);
+
+            dojo.setAttr(el, 'class', `card card--${card.class}`);
+            dojo.setAttr(el, 'data-color', card.color);
+            dojo.setAttr(el, 'data-id', card.id);
+            dojo.setAttr(el, 'data-value', card.value);
+        },
+
+        replaceCardOnCell: function(cellLocation, card) {
+            const domId = `js-board-cell--${cellLocation}`;
+            const el = $(domId);
+
+            this.replaceCardAttributes(card, domId);
+            this.removeTooltip(domId);
+            this.addTooltip(domId, _(`${card.value} ${card.color}`), _(`Click to place a ${card.value} card or a ${card.color} card`));
+        },
+        replaceCardOnDiscardPile: function(card) {
+            this.replaceCardAttributes(card, 'js-discard-pile-card');
         },
 
         // used on Tisaac slide
@@ -454,6 +487,7 @@ function (dojo, declare) {
             // Example 1: standard notification handling
             dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
             dojo.subscribe( 'actionPlayed', this, "notif_actionPlayed" );
+            dojo.subscribe( 'drawCard', this, "notif_drawCard" );
             dojo.subscribe( 'drawSelfCard', this, "notif_drawSelfCard" );
 
             // Example 2: standard notification handling + tell the user interface to wait
@@ -485,8 +519,10 @@ function (dojo, declare) {
                 this.selectedCard = {};
             }
 
-            this.slide(cardSelector, destinationSelector);
-            // TODO replace cell with card and add event listeners
+            this.slide(cardSelector, destinationSelector).then(() => {
+                this.replaceCardOnCell(notif.args.cell_location, card);
+                dojo.destroy(cardSelector);
+            });
         },
 
         notif_actionPlayed: function( notif )
@@ -508,8 +544,10 @@ function (dojo, declare) {
                 this.selectedCard = {};
             }
 
-            this.slide(cardSelector, destinationSelector);
-            // TODO update discard pile number, and replace DOM element (remove multiple cards)
+            this.slide(cardSelector, destinationSelector).then(() => {
+                this.replaceCardOnDiscardPile(card);
+                dojo.destroy(cardSelector);
+            });
         },
 
         notif_drawSelfCard: function( notif )
@@ -525,7 +563,17 @@ function (dojo, declare) {
             dojo.place(cardDiv, 'js-deck');
 
             this.slide(cardSelector, destinationSelector);
-            // TODO update draw number
+            this.addTooltip(cardSelector, _(`${card.value} ${card.color}`), _('Click to select card'));
+            dojo.connect($(cardSelector), 'onclick', this, this.onHandCardClick);
         },
+
+        notif_drawCard: function( notif )
+        {
+            // Update number of cards on deck
+            this.setNumberOfCardsOnBadge(notif.args.totalcardsondeck, 'js-deck-badge');
+            if (notif.args.totalcardsondiscardpile) {
+                this.setNumberOfCardsOnBadge(notif.args.totalcardsondiscardpile, 'js-discard-pile-badge');
+            }
+        }
    });
 });
