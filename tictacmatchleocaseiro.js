@@ -107,9 +107,8 @@ function (dojo, declare) {
             // Show number of cards on Discard Pile
             self.setNumberOfCardsOnBadge(self.gamedatas.totalcardsondiscardpile, 'js-discard-pile-badge');
 
-            // Show player team card // TODO Flip correct side
-            const teamCardClass = `card-flip--flipped-${this.getTeamValue().toLowerCase()}`;
-            dojo.replaceClass('js-team-card', teamCardClass, 'card--empty');
+            // Show player team card
+            this.flipTeamCard();
 
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
@@ -349,6 +348,11 @@ function (dojo, declare) {
             return cardDiv;
         },
 
+        flipTeamCard() {
+            const teamCardClass = `card-flip card-flip--flipped-${this.getTeamValue().toLowerCase()}`;
+            dojo.setAttr('js-team-card', 'class', teamCardClass);
+        },
+
         ///////////////////////////////////////////////////
         //// Player's action
 
@@ -529,6 +533,7 @@ function (dojo, declare) {
         {
             console.log( 'notif_actionPlayed' );
             console.log( notif );
+            const action = notif.args.action;
             const card = notif.args.card;
             const player_id = notif.args.player_id;
             const destinationSelector = 'js-discard-pile-card';
@@ -548,6 +553,15 @@ function (dojo, declare) {
                 this.replaceCardOnDiscardPile(card);
                 dojo.destroy(cardSelector);
             });
+
+            switch (action.name) {
+                case 'action_flip':
+                    this.gamedatas.teams = action.teams;
+                    this.flipTeamCard();
+                    break;
+                default:
+                    break;
+            }
         },
 
         notif_drawSelfCard: function( notif )

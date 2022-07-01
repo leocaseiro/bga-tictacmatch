@@ -374,12 +374,19 @@ class tictacmatchleocaseiro extends Table
 
         $card = $this->cards->getCard($card_id);
         $this->addExtraCardPropertiesFromMaterial($card);
+        $action = [
+            'name' => $card['class']
+        ];
 
         // Do Action
         switch ($card['class']) {
             // Flip card
             case 'action_flip':
                 $this->toggleTeam();
+                $action['teams'] = [
+                    'even' => $this->getTeamValue(self::getGameStateValue(self::TEAM_EVEN)),
+                    'odd' => $this->getTeamValue(self::getGameStateValue(self::TEAM_ODD))
+                ];
                 break;
             case 'action_2plus':
                 break;
@@ -395,7 +402,8 @@ class tictacmatchleocaseiro extends Table
             'player_id' => $player_id,
             'player_name' => self::getActivePlayerName(),
             'card_name' => $card_name,
-            'card' => $card
+            'card' => $card,
+            'action' => $action,
         ) );
 
         // Draw a new card to player
