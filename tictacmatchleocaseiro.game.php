@@ -350,7 +350,8 @@ class tictacmatchleocaseiro extends Table
 
     function setWinners($winner) {
         $players = self::loadPlayersBasicInfos();
-        $winners_no = self::getGameStateValue(self::TEAM_EVEN) == $winner ? [0, 2] : [1, 3];
+        $winner_value = $winner == self::TEAM_X_STRING ? self::TEAM_X : self::TEAM_O;
+        $winners_no = self::getGameStateValue(self::TEAM_EVEN) == $winner_value ? [0, 2] : [1, 3];
         foreach ($players as $player) {
             if (in_array($player['player_no'], $winners_no)) {
                 $this->setWinnerScore($player['player_id']);
