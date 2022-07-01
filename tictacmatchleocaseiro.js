@@ -208,6 +208,10 @@ function (dojo, declare) {
             script.
 
         */
+        randomInteger(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        },
+
         getTeamValue: function() {
             const playerObj = this.gamedatas.players[this.player_id];
             return Number(playerObj.player_no) % 2 === 0 ? this.gamedatas.teams.even : this.gamedatas.teams.odd;
@@ -493,6 +497,8 @@ function (dojo, declare) {
             dojo.subscribe( 'actionPlayed', this, "notif_actionPlayed" );
             dojo.subscribe( 'drawCard', this, "notif_drawCard" );
             dojo.subscribe( 'drawSelfCard', this, "notif_drawSelfCard" );
+            dojo.subscribe( 'moveCardsToDeck', this, "notif_moveCardsToDeck" );
+            dojo.subscribe( 'reShuffleDeck', this, "notif_reShuffleDeck" );
 
             // Example 2: standard notification handling + tell the user interface to wait
             //            during 3 seconds after calling the method in order to let the players
@@ -502,6 +508,8 @@ function (dojo, declare) {
             //
             this.notifqueue.setSynchronous("drawCard", 800);
             this.notifqueue.setSynchronous("drawSelfCard", 500);
+            this.notifqueue.setSynchronous("moveCardsToDeck", 500);
+            this.notifqueue.setSynchronous("reShuffleDeck", 800);
         },
 
         notif_cardPlayed: function( notif )
@@ -588,6 +596,38 @@ function (dojo, declare) {
             if (notif.args.totalcardsondiscardpile) {
                 this.setNumberOfCardsOnBadge(notif.args.totalcardsondiscardpile, 'js-discard-pile-badge');
             }
-        }
+        },
+
+        notif_moveCardsToDeck: function( notif )
+        {
+            console.log( 'notif_moveCardsToDeck' );
+            console.log( notif );
+            const from = notif.args.from;
+            const to = notif.args.to;
+            const totalOfCards = notif.args.totalOfCards;
+
+            for(let i = 0; i <= totalOfCards; i++) {
+                const cardId = `js-from--${from}--to--${to}--${i}`;
+                const duration = this.randomInteger(500, 1200);
+                const backCard = this.format_block('jstpl_back_card', { ID: cardId });
+                dojo.place(backCard, from);
+                // this.slide(cardId, to, { destroy: true });
+                this.slide(cardId, to, { clearPos: false, duration: duration });
+            }
+        },
+
+        notif_reShuffleDeck: function( notif )
+        {
+            console.log( 'notif_reShuffleDeck' );
+            console.log( notif );
+
+            // Update number of cards on deck
+            this.setNumberOfCardsOnBadge(notif.args.totalcardsondeck, 'js-deck-badge');
+            dojo.setAttr('js-deck', 'class', 'card card--back');
+            if (notif.args.totalcardsondiscardpile) {
+                this.setNumberOfCardsOnBadge(notif.args.totalcardsondiscardpile, 'js-discard-pile-badge');
+                dojo.setAttr('js-deck', 'class', 'card card--back');
+            }
+        },
    });
 });

@@ -358,6 +358,48 @@ class tictacmatchleocaseiro extends Table
         }
     }
 
+    function moveCardsToDeck($from_location, $from_js_id, $cell = false) {
+        $totalOfCards = $this->cards->countCardInLocation($from_location);
+
+        if (!$cell || $totalOfCards > 1) {
+            $cardOnTop = $this->cards->getCardOnTop($from_location);
+
+            // move all cards from cell to deck
+            $this->cards->moveAllCardsInLocation($from_location, 'deck');
+
+            if ($cell) {
+                // revert card from the top to stay on cell
+                $this->cards->moveCard($cardOnTop['id'], $from_location);
+            }
+
+            // Notify all players about the card played
+            self::notifyAllPlayers( "moveCardsToDeck", "", array(
+                'from' => $from_js_id,
+                'to' => 'js-deck',
+                'totalOfCards' => $totalOfCards,
+            ));
+        }
+    }
+
+    function reShuffleDeck() {
+        // grab cards for each cell, except from the top card
+        for ($i = 0; $i < 9; $i++) {
+            $cell = 'cell-' . $i;
+            $this->moveCardsToDeck($cell, 'js-board-cell--'. $i, true);
+        }
+        // grab cards from discard pile
+        $this->moveCardsToDeck('discardpile', 'js-discard-pile-card');
+
+        // shuffle new deck
+        $this->cards->shuffle('deck');
+
+        // Notify all players about the new draw pile
+        self::notifyAllPlayers( "reShuffleDeck", clienttranslate( 'Draw pile was empty, making new draw pile from discarded cards and covered cards' ), array(
+            'totalcardsondeck' => $this->cards->countCardInLocation('deck'),
+            'totalcardsondiscardpile' => $this->cards->countCardInLocation('discardpile')
+        ));
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
 ////////////
@@ -379,7 +421,6 @@ class tictacmatchleocaseiro extends Table
         $card = $this->cards->getCard($card_id);
 
         $this->addExtraCardPropertiesFromMaterial($card);
-
 
         if($playingGridCard) {
             $this->addExtraCardPropertiesFromMaterial($playingGridCard);
@@ -417,23 +458,26 @@ class tictacmatchleocaseiro extends Table
 
         // Draw a new card to player
         $newCard = $this->cards->pickCard('deck', $player_id);
-        if ($newCard) {
-            $this->addExtraCardPropertiesFromMaterial($newCard);
-            $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
+        $this->addExtraCardPropertiesFromMaterial($newCard);
+        $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
 
-            // Notify all players about the drawing card
-            self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
-                'player_name' => self::getActivePlayerName(),
-                'totalcardsondeck' => $this->cards->countCardInLocation('deck'),
-            ));
+        // Notify all players about the drawing card
+        $totalcardsondeck = $this->cards->countCardInLocation('deck');
+        self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
+            'player_name' => self::getActivePlayerName(),
+            'totalcardsondeck' => $totalcardsondeck
+        ));
 
-            // Notify player about the new card
-            self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
-                'player_id' => $player_id,
-                'player_name' => self::getActivePlayerName(),
-                'card_name' => $newCard_name,
-                'card' => $newCard
-            ));
+        // Notify player about the new card
+        self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
+            'player_id' => $player_id,
+            'player_name' => self::getActivePlayerName(),
+            'card_name' => $newCard_name,
+            'card' => $newCard
+        ));
+
+        if ($totalcardsondeck == 0) {
+            $this->reShuffleDeck();
         }
 
         $this->gamestate->nextState('nextPlayer');
@@ -489,23 +533,27 @@ class tictacmatchleocaseiro extends Table
 
         // Draw a new card to player
         $newCard = $this->cards->pickCard('deck', $player_id);
-        if ($newCard) {
-            $this->addExtraCardPropertiesFromMaterial($newCard);
-            $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
-            // Notify all players about the drawing card
-            self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
-                'player_name' => self::getActivePlayerName(),
-                'totalcardsondeck' => $this->cards->countCardInLocation('deck'),
-                'totalcardsondiscardpile' => $this->cards->countCardInLocation('discardpile')
-            ));
+        $this->addExtraCardPropertiesFromMaterial($newCard);
+        $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
 
-            // Notify player about the new card
-            self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
-                'player_id' => $player_id,
-                'player_name' => self::getActivePlayerName(),
-                'card_name' => $newCard_name,
-                'card' => $newCard,
-            ));
+        // Notify all players about the drawing card
+        $totalcardsondeck = $this->cards->countCardInLocation('deck');
+        self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
+            'player_name' => self::getActivePlayerName(),
+            'totalcardsondeck' => $totalcardsondeck,
+            'totalcardsondiscardpile' => $this->cards->countCardInLocation('discardpile')
+        ));
+
+        // Notify player about the new card
+        self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
+            'player_id' => $player_id,
+            'player_name' => self::getActivePlayerName(),
+            'card_name' => $newCard_name,
+            'card' => $newCard,
+        ));
+
+        if ($totalcardsondeck == 0) {
+            $this->reShuffleDeck();
         }
 
         $this->gamestate->nextState('nextPlayer');
