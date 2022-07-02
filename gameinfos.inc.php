@@ -50,16 +50,16 @@ $gameinfos = array(
 
 
 // Estimated game duration, in minutes (used only for the launch, afterward the real duration is computed)
-'estimated_duration' => 30,
+'estimated_duration' => 5,
 
 // Time in second add to a player when "giveExtraTime" is called (speed profile = fast)
-'fast_additional_time' => 30,
+'fast_additional_time' => 10,
 
 // Time in second add to a player when "giveExtraTime" is called (speed profile = medium)
-'medium_additional_time' => 40,
+'medium_additional_time' => 20,
 
 // Time in second add to a player when "giveExtraTime" is called (speed profile = slow)
-'slow_additional_time' => 50,
+'slow_additional_time' => 30,
 
 // If you are using a tie breaker in your game (using "player_score_aux"), you must describe here
 // the formula used to compute "player_score_aux". This description will be used as a tooltip to explain
@@ -88,16 +88,16 @@ $gameinfos = array(
 'language_dependency' => false,
 
 // Complexity of the game, from 0 (extremely simple) to 5 (extremely complex)
-'complexity' => 3,
+'complexity' => 0,
 
 // Luck of the game, from 0 (absolutely no luck in this game) to 5 (totally luck driven)
-'luck' => 3,
+'luck' => 1,
 
 // Strategy of the game, from 0 (no strategy can be setup) to 5 (totally based on strategy)
-'strategy' => 3,
+'strategy' => 1,
 
 // Diplomacy of the game, from 0 (no interaction in this game) to 5 (totally based on interaction and discussion between players)
-'diplomacy' => 3,
+'diplomacy' => 1,
 
 // Colors attributed to players
 'player_colors' => array( "ff0000", "008000", "0000ff", "ffa500", "773300" ),
@@ -118,7 +118,7 @@ $gameinfos = array(
     //  default: 740
     //  maximum possible value: 740 (ie: your game interface should fit with a 740px width (correspond to a 1024px screen)
     //  minimum possible value: 320 (the lowest value you specify, the better the display is on mobile)
-    'min' => 740,
+    'min' => 320,
 
     // Maximum width
     //  default: null (ie: no limit, the game interface is as big as the player's screen allows it).
@@ -145,7 +145,7 @@ $gameinfos = array(
 //  IMPORTANT: this list should be ORDERED, with the most important tag first.
 //  NOTE: tags are only read during the first deploy from the file gameinfos.inc.php; afterwards, BGA is responsible for setting tags for a game.
 
-'tags' => array( 2 ),
+'tags' => array( 2, 10, 26, 200, 204 ),
 
 
 //////// BGA SANDBOX ONLY PARAMETERS (DO NOT MODIFY)
