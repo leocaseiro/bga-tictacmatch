@@ -131,20 +131,18 @@ function (dojo, declare) {
 
             switch( stateName )
             {
+                case 'playerTurn':
+                    this.removeClassFromSelector('.card--selectable', 'card--selectable');
 
-            /* Example:
-
-            case 'myGameState':
-
-                // Show some HTML block at this game state
-                dojo.style( 'my_html_block_id', 'display', 'block' );
-
-                break;
-           */
-
-
-            case 'dummmy':
-                break;
+                    if (this.isCurrentPlayerActive()) {
+                        this.addClassFromSelector('#js-hand__cards .card', 'card--selectable');
+                    } else {
+                        this.removeClassFromSelector('#js-hand__cards .card', 'card--selectable');
+                    }
+                case 'endGame':
+                    this.removeClassFromSelector('.card--selectable', 'card--selectable');
+                    this.removeClassFromSelector('.card--selected', 'card--selected');
+                    break;
             }
         },
 
@@ -350,6 +348,7 @@ function (dojo, declare) {
                 CLASS: card.class,
                 COLOR: card.color,
                 CARDVALUE: card.value,
+                TYPE: card.type,
             });
             return cardDiv;
         },
@@ -360,6 +359,18 @@ function (dojo, declare) {
                 teamCardClass = `card-flip card-flip--flipped-${this.getTeamValue().toLowerCase()}`;
             }
             dojo.setAttr('js-team-card', 'class', teamCardClass);
+        },
+
+        removeClassFromSelector(sel = '.card', className = 'selected') {
+            dojo.query(sel).forEach((el) => {
+                dojo.removeClass(el, className);
+            });
+        },
+
+        addClassFromSelector(sel = '.card', className = 'selected') {
+            dojo.query(sel).forEach((el) => {
+                dojo.addClass(el, className);
+            });
         },
 
         ///////////////////////////////////////////////////
@@ -382,40 +393,51 @@ function (dojo, declare) {
             if (!this.checkAction('playCard', true)) {
                 return;
             }
+
             this.selectedCard = e.target.dataset;
 
-            if (this.selectedCard.color === 'action') {
-                switch (this.selectedCard.value) {
-                    case 'wipe_out_card':
-                        const keys = Object.values(this.gamedatas.players)
-                            .filter(player => player.id != this.getCurrentPlayerId())
-                            .map(player => player.name);
-                        this.multipleChoiceDialog(
-                            _('Choose a player to wipe cards out:'), keys,
-                            (choice) => {
-                                const playerChosenName = keys[choice];
-                                const playerChosen = Object.values(this.gamedatas.players)
-                                    .find(player => player.name == playerChosenName);
-                                this.ajaxcall( '/tictacmatchleocaseiro/tictacmatchleocaseiro/playAction.html', {
-                                    lock: true,
-                                    cardId: this.selectedCard.id,
-                                    playerChosen: playerChosen.id
-                                }, this, () => {});
-                            }
-                        );
-                        break;
-                    case 'flip_card':
-                    case 'double_play_card':
-                    default:
-                        this.ajaxcall(
-                            '/tictacmatchleocaseiro/tictacmatchleocaseiro/playAction.html',
-                            {
+            this.removeClassFromSelector('.card--selected', 'card--selected');
+            this.removeClassFromSelector('.ttm-board-grid .card--selectable', 'card--selectable');
+            if (this.selectedCard.type === 'symbol') {
+                this.addClassFromSelector('#' + e.target.id, 'card--selected');
+                this.addClassFromSelector(`.ttm-board-grid .card[data-color="${this.selectedCard.color}"]`, 'card--selectable');
+                this.addClassFromSelector(`.ttm-board-grid .card[data-value="${this.selectedCard.value}"]`, 'card--selectable');
+                this.addClassFromSelector('.ttm-board-grid .card--empty', 'card--selectable');
+                // remove if same value and color
+                this.removeClassFromSelector(`.ttm-board-grid .card[data-color="${this.selectedCard.color}"].card[data-value="${this.selectedCard.value}"]`, 'card--selectable');
+                return;
+            }
+
+            switch (this.selectedCard.value) {
+                case 'wipe_out_card':
+                    const keys = Object.values(this.gamedatas.players)
+                        .filter(player => player.id != this.getCurrentPlayerId())
+                        .map(player => player.name);
+                    this.multipleChoiceDialog(
+                        _('Choose a player to wipe cards out:'), keys,
+                        (choice) => {
+                            const playerChosenName = keys[choice];
+                            const playerChosen = Object.values(this.gamedatas.players)
+                                .find(player => player.name == playerChosenName);
+                            this.ajaxcall( '/tictacmatchleocaseiro/tictacmatchleocaseiro/playAction.html', {
                                 lock: true,
                                 cardId: this.selectedCard.id,
-                            }, this, () => {}
-                        );
-                        break;
-                }
+                                playerChosen: playerChosen.id
+                            }, this, () => {});
+                        }
+                    );
+                    break;
+                case 'flip_card':
+                case 'double_play_card':
+                default:
+                    this.ajaxcall(
+                        '/tictacmatchleocaseiro/tictacmatchleocaseiro/playAction.html',
+                        {
+                            lock: true,
+                            cardId: this.selectedCard.id,
+                        }, this, () => {}
+                    );
+                    break;
             }
         },
 
@@ -576,6 +598,11 @@ function (dojo, declare) {
             this.slide(cardSelector, destinationSelector);
             this.addTooltip(cardSelector, card.label, _('Click to select card'));
             dojo.connect($(cardSelector), 'onclick', this, this.onHandCardClick);
+            if (this.isCurrentPlayerActive()) {
+                this.addClassFromSelector('#js-hand__cards .card', 'card--selectable');
+            } else {
+                this.removeClassFromSelector('#js-hand__cards .card', 'card--selectable');
+            }
         },
 
         notif_drawCard: function( notif )
@@ -584,6 +611,12 @@ function (dojo, declare) {
             this.setNumberOfCardsOnBadge(notif.args.totalcardsondeck, 'js-deck-badge');
             if (notif.args.totalcardsondiscardpile) {
                 this.setNumberOfCardsOnBadge(notif.args.totalcardsondiscardpile, 'js-discard-pile-badge');
+            }
+
+            if (this.isCurrentPlayerActive()) {
+                this.addClassFromSelector('#js-hand__cards .card', 'card--selectable');
+            } else {
+                this.removeClassFromSelector('#js-hand__cards .card', 'card--selectable');
             }
         },
 
@@ -646,6 +679,11 @@ function (dojo, declare) {
                 });
 
                 this.setNumberOfCardsOnBadge(notif.args.totalcardsondiscardpile, 'js-discard-pile-badge');
+                if (this.isCurrentPlayerActive()) {
+                    this.addClassFromSelector('#js-hand__cards .card', 'card--selectable');
+                } else {
+                    this.removeClassFromSelector('#js-hand__cards .card', 'card--selectable');
+                }
             });
         }
    });

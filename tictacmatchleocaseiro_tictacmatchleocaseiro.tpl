@@ -67,7 +67,7 @@
 
 // Javascript HTML templates
 
-var jstpl_card='<div id="${DOMID}" data-id="${DATAID}" class="card card--${CLASS}" data-value="${CARDVALUE}" data-color="${COLOR}"></div>';
+var jstpl_card='<div id="${DOMID}" data-type="${TYPE}" data-id="${DATAID}" class="card card--${CLASS}" data-value="${CARDVALUE}" data-color="${COLOR}"></div>';
 var jstpl_back_card='<div id="${DOMID}" class="card card--back"></div>';
 </script>
 

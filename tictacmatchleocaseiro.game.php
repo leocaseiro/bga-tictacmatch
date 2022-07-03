@@ -304,6 +304,10 @@ class tictacmatchleocaseiro extends Table
 
         $card['class'] = $materialCard['class'];
         $card['color'] = $materialCard['color'];
+        if (isset($materialCard['colorLabel'])) {
+            $card['colorLabel'] = $materialCard['colorLabel'];
+        }
+        $card['label'] = $materialCard['label'];
         $card['value'] = $materialCard['value'];
     }
 

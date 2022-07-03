@@ -53,6 +53,8 @@
     --tictacmatchCardScale: .45;
     --tictacmatchCardWidth: 258px;
     --tictacmatchCardHeight: 358px;
+    --tictacmatchYellow: #FDF051;
+    --tictacmatchPurple: #77749F;
 }
 
 .hide {
@@ -115,9 +117,24 @@
     border-radius: 13px;
     box-shadow: 2px 1px 1px rgb(0 0 0 / 44%);
     box-sizing: content-box;
+    cursor: not-allowed;
     width: calc(var(--tictacmatchCardWidth) * var(--tictacmatchCardScale));
     height: calc(var(--tictacmatchCardHeight) * var(--tictacmatchCardScale));
 }
+.card--selectable {
+    cursor: pointer;
+    border: 3px solid var(--tictacmatchYellow);
+    box-shadow: 0 0 5px 1px var(--tictacmatchYellow);
+}
+.card--selectable:hover {
+    transform: scale(1.1);
+    z-index: 2;
+}
+.card--selected {
+    border: 3px solid var(--tictacmatchPurple);
+    box-shadow: 0 0 5px 1px var(--tictacmatchPurple);
+}
+
 .card-badge {
     position: absolute;
     color: white;
@@ -139,7 +156,7 @@
 .card-badge:before {
   content: attr(title);
   position: absolute;
-  -webkit-text-stroke: 0.2em #77749F;
+  -webkit-text-stroke: 0.2em var(--tictacmatchPurple);
   left: 0;
   z-index: -1;
 }
@@ -147,7 +164,7 @@
 .card-badge:after {
   content: attr(title);
   position: absolute;
-  -webkit-text-stroke: 0.3em #FDF051;
+  -webkit-text-stroke: 0.3em var(--tictacmatchYellow);
   left: 0;
   z-index: -2;
 }
