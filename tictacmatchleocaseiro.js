@@ -89,8 +89,11 @@ function (dojo, declare) {
 
                 dojo.place(cardDiv, domId, 'replace');
                 this.addTooltip(domId, _(`${card.value} ${card.color}`), _(`Click to place a ${card.value} card or a ${card.color} card`));
-                dojo.setAttr($(domId), 'data-cell', i);
-                dojo.connect($(domId), 'onclick', self, self.onGridCardClick);
+                const $el = $(domId);
+                if ($el) {
+                    dojo.setAttr($el, 'data-cell', i);
+                    dojo.connect($el, 'onclick', self, self.onGridCardClick);
+                }
             });
 
             // Show number of cards on deck
@@ -343,7 +346,7 @@ function (dojo, declare) {
 
         getCardDiv(domId, id, card) {
             const cardDiv = this.format_block('jstpl_card', {
-                ID: domId,
+                DOMID: domId,
                 DATAID: id,
                 CLASS: card.class,
                 COLOR: card.color,
@@ -395,7 +398,7 @@ function (dojo, declare) {
                                     lock: true,
                                     cardId: this.selectedCard.id,
                                     playerChosen: playerChosen.id
-                                }, this);
+                                }, this, () => {});
                             }
                         );
                         break;
@@ -407,7 +410,7 @@ function (dojo, declare) {
                             {
                                 lock: true,
                                 cardId: this.selectedCard.id,
-                            }, this
+                            }, this, () => {}
                         );
                         break;
                 }
@@ -451,50 +454,9 @@ function (dojo, declare) {
                     cellLocation: cell.cell,
                     cardId: this.selectedCard.id,
                 },
-                this,
-                function( result ) {
-                    console.log('resutl'. result);
-                    // Do some stuff after a successful call
-                    // NB : usually not needed as changes must be handled by notifications
-                    // You should NOT modify the interface in a callback or it will most likely break the framework replays (or make it inaccurate)
-                    // You should NOT make another ajaxcall in a callback in order not to create race conditions
-                }
+                this, () => {}
             );
         },
-
-        /* Example:
-
-        onMyMethodToCall1: function( evt )
-        {
-            console.log( 'onMyMethodToCall1' );
-
-            // Preventing default browser reaction
-            dojo.stopEvent( evt );
-
-            // Check that this action is possible (see "possibleactions" in states.inc.php)
-            if( ! this.checkAction( 'myAction' ) )
-            {   return; }
-
-            this.ajaxcall( "/tictacmatchleocaseiro/tictacmatchleocaseiro/myAction.html", {
-                                                                    lock: true,
-                                                                    myArgument1: arg1,
-                                                                    myArgument2: arg2,
-                                                                    ...
-                                                                 },
-                         this, function( result ) {
-
-                            // What to do after the server call if it succeeded
-                            // (most of the time: nothing)
-
-                         }, function( is_error) {
-
-                            // What to do after the server call in anyway (success or failure)
-                            // (most of the time: nothing)
-
-                         } );
-        },
-
-        */
 
 
         ///////////////////////////////////////////////////
@@ -634,7 +596,7 @@ function (dojo, declare) {
             for(let i = 0; i <= totalOfCards; i++) {
                 const cardId = `js-from--${from}--to--${to}--${i}`;
                 const duration = this.randomInteger(500, 1200);
-                const backCard = this.format_block('jstpl_back_card', { ID: cardId });
+                const backCard = this.format_block('jstpl_back_card', { DOMID: cardId });
                 dojo.place(backCard, from);
                 // this.slide(cardId, to, { destroy: true });
                 this.slide(cardId, to, { clearPos: false, duration: duration });
