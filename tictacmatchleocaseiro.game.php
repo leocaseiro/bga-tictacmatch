@@ -511,6 +511,14 @@ class tictacmatchleocaseiro extends Table
         self::incStat(1, $card['value'] . 's_played', $player_id);
     }
 
+    protected function isPlayerZombie($player_id) {
+        $players = self::loadPlayersBasicInfos();
+        if (! isset($players[$player_id]))
+            throw new BgaSystemException("Player $player_id is not playing here");
+
+        return ($players[$player_id]['player_zombie'] == 1);
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
 ////////////
@@ -632,6 +640,10 @@ class tictacmatchleocaseiro extends Table
                 $do_action = 'action_2plus';
                 break;
             case 'wipe_out_card':
+                if ($this->isPlayerZombie($playerChosen)) {
+                    throw new BgaUserException(self::_('The player you are trying to wipe cards is a zombie, please choose another player!'));
+                    return;
+                }
                 $do_action = 'action_wipe_out';
                 break;
         }
@@ -804,26 +816,20 @@ class tictacmatchleocaseiro extends Table
 
     function zombieTurn( $state, $active_player )
     {
-    	$statename = $state['name'];
+        // Ripped-off idea from Bandido
+    	// If the player just left, we put back their cards in the deck. Else we do nothing more.
+         if ($this->cards->countCardInLocation("hand", $active_player) != 0) {
+            $this->cards->moveAllCardsInLocation("hand", "deck", $active_player);
+            $this->notifyAllPlayers(
+                "playerLeft",
+                clienttranslate('A player left. Their hand has been sent back to the deck.'),
+                array()
+            );
 
-        if ($state['type'] === "activeplayer") {
-            switch ($statename) {
-                default:
-                    $this->gamestate->nextState( "zombiePass" );
-                	break;
-            }
-
-            return;
+            self::notifyPlayer($active_player, "changeHand", "", array('newHand' => array()));
         }
 
-        if ($state['type'] === "multipleactiveplayer") {
-            // Make sure player is in a non blocking status for role turn
-            $this->gamestate->setPlayerNonMultiactive( $active_player, '' );
-
-            return;
-        }
-
-        throw new feException( "Zombie mode not supported at this game state: ".$statename );
+        $this->gamestate->nextState("zombiePass");
     }
 
 ///////////////////////////////////////////////////////////////////////////////////:
