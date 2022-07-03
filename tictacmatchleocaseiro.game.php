@@ -25,6 +25,7 @@ class tictacmatchleocaseiro extends Table
 	const TEAM_1_2 = 2;
 	const TEAM_1_4 = 3;
 	const TEAM_RANDOM = 4;
+    const PLAYER_TEAMS = 'playerTeams';
 
     const TEAM_EVEN = 'evens_team';
     const TEAM_ODD = 'odds_team';
@@ -36,6 +37,8 @@ class tictacmatchleocaseiro extends Table
     const HAS_WINNER = 'has_winner';
 
     const WIPE_CARDS_FROM = 'wipe_cards_from';
+    const DOUBLE_PLAY_PLAYER = 'double_play_player';
+    const DOUBLE_PLAY_CARDS = 'double_play_cards';
 
 
 	function __construct( )
@@ -49,11 +52,13 @@ class tictacmatchleocaseiro extends Table
         parent::__construct();
 
         self::initGameStateLabels( array(
-            'playerTeams' => 100,
-            self::TEAM_ODD => 101,
-            self::TEAM_EVEN => 102,
-            self::HAS_WINNER => 103,
-            self::WIPE_CARDS_FROM => 104,
+            self::PLAYER_TEAMS => 100,
+            self::TEAM_ODD => 11,
+            self::TEAM_EVEN => 12,
+            self::HAS_WINNER => 13,
+            self::WIPE_CARDS_FROM => 14,
+            self::DOUBLE_PLAY_PLAYER => 15,
+            self::DOUBLE_PLAY_CARDS => 16,
         ) );
         $this->cards = self::getNew( "module.common.deck" );
         $this->cards->init( "card" );
@@ -92,7 +97,7 @@ class tictacmatchleocaseiro extends Table
 		// Player order based on 'playerTeams' option
 		if (count($players) === 4) {
             $playerOrder = [0, 1, 2, 3];
-            switch (self::getGameStateValue('playerTeams')) {
+            switch (self::getGameStateValue(self::PLAYER_TEAMS)) {
                 case self::TEAM_1_2:
                     $playerOrder = [0, 2, 1, 3];
                     break;
@@ -149,6 +154,8 @@ class tictacmatchleocaseiro extends Table
 
         // setup the initial game situation here
         self::setGameStateInitialValue( self::HAS_WINNER, false );
+        self::setGameStateInitialValue( self::DOUBLE_PLAY_PLAYER, 0 );
+        self::setGameStateInitialValue( self::DOUBLE_PLAY_CARDS, 3 );
 
         // Create cards
         $this->cards->createCards($this->ttm_cards, 'deck');
@@ -490,24 +497,28 @@ class tictacmatchleocaseiro extends Table
             return;
         }
 
-        // Draw a new card to player
-        $newCard = $this->cards->pickCard('deck', $player_id);
-        $this->addExtraCardPropertiesFromMaterial($newCard);
-        $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
+        // Only draw if is not part of double play
+        if (self::getGameStateValue(self::DOUBLE_PLAY_PLAYER) == 0) {
+            // Draw a new card to player
+            $newCard = $this->cards->pickCard('deck', $player_id);
+            $this->addExtraCardPropertiesFromMaterial($newCard);
+            $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
 
-        // Notify all players about the drawing card
+            // Notify all players about the drawing card
+            $totalcardsondeck = $this->cards->countCardInLocation('deck');
+            self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
+                'player_name' => self::getActivePlayerName(),
+                'totalcardsondeck' => $totalcardsondeck
+            ));
+
+            // Notify player about the new card
+            self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
+                'card_name' => $newCard_name,
+                'card' => $newCard
+            ));
+        }
+
         $totalcardsondeck = $this->cards->countCardInLocation('deck');
-        self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
-            'player_name' => self::getActivePlayerName(),
-            'totalcardsondeck' => $totalcardsondeck
-        ));
-
-        // Notify player about the new card
-        self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
-            'card_name' => $newCard_name,
-            'card' => $newCard
-        ));
-
         if ($totalcardsondeck == 0) {
             $this->reShuffleDeck();
         }
@@ -541,6 +552,8 @@ class tictacmatchleocaseiro extends Table
                 ];
                 break;
             case 'action_2plus':
+                self::setGameStateValue(self::DOUBLE_PLAY_PLAYER, self::getActivePlayerId());
+                $do_action = 'action_2plus';
                 break;
             case 'action_wipe_out':
                 $do_action = 'action_wipe_out';
@@ -566,25 +579,29 @@ class tictacmatchleocaseiro extends Table
             return;
         }
 
-        // Draw a new card to player
-        $newCard = $this->cards->pickCard('deck', $player_id);
-        $this->addExtraCardPropertiesFromMaterial($newCard);
-        $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
+        // Only draw if is not part of double play
+        if (self::getGameStateValue(self::DOUBLE_PLAY_PLAYER) == 0) {
+            // Draw a new card to player
+            $newCard = $this->cards->pickCard('deck', $player_id);
+            $this->addExtraCardPropertiesFromMaterial($newCard);
+            $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
 
-        // Notify all players about the drawing card
+            // Notify all players about the drawing card
+            $totalcardsondeck = $this->cards->countCardInLocation('deck');
+            self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
+                'player_name' => self::getActivePlayerName(),
+                'totalcardsondeck' => $totalcardsondeck,
+                'totalcardsondiscardpile' => $this->cards->countCardInLocation('discardpile')
+            ));
+
+            // Notify player about the new card
+            self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
+                'card_name' => $newCard_name,
+                'card' => $newCard,
+            ));
+        }
+
         $totalcardsondeck = $this->cards->countCardInLocation('deck');
-        self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
-            'player_name' => self::getActivePlayerName(),
-            'totalcardsondeck' => $totalcardsondeck,
-            'totalcardsondiscardpile' => $this->cards->countCardInLocation('discardpile')
-        ));
-
-        // Notify player about the new card
-        self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
-            'card_name' => $newCard_name,
-            'card' => $newCard,
-        ));
-
         if ($totalcardsondeck == 0) {
             $this->reShuffleDeck();
         }
@@ -635,16 +652,59 @@ class tictacmatchleocaseiro extends Table
 
     function stNextPlayer()
     {
+        // End of the game!
         if (self::getGameStateValue(self::HAS_WINNER)) {
+            // TODO notification for the winner
             $this->gamestate->nextState('endGame');
-        } elseif ($player_id = self::getGameStateValue(self::WIPE_CARDS_FROM)) {
+            return;
+        }
+
+        // Wipe Cards out
+        if ($player_id = self::getGameStateValue(self::WIPE_CARDS_FROM)) {
             self::setGameStateValue(self::WIPE_CARDS_FROM, 0);
             $this->gamestate->changeActivePlayer( $player_id );
             $this->gamestate->nextState('playerTurn');
-        } else {
-            $this->activeNextPlayer();
-            $this->gamestate->nextState('playerTurn');
+            return;
         }
+
+        // Double Play
+        if ($player_id = self::getGameStateValue(self::DOUBLE_PLAY_PLAYER)) {
+            $cards = self::getGameStateValue(self::DOUBLE_PLAY_CARDS);
+            if ($cards == 3) {
+                self::setGameStateValue(self::DOUBLE_PLAY_CARDS, 2);
+                $this->gamestate->nextState('playerTurn');
+                return;
+            } elseif ($cards == 2) {
+                self::setGameStateValue(self::DOUBLE_PLAY_CARDS, 1);
+                $this->gamestate->nextState('playerTurn');
+                return;
+            } elseif ($cards == 1) {
+                // reset
+                self::setGameStateValue(self::DOUBLE_PLAY_PLAYER, 0);
+                self::setGameStateValue(self::DOUBLE_PLAY_CARDS, 3);
+                // Notify player about the new 4 cards
+                for ($i = 0; $i < 3; $i++) {
+                    // Draw a new card to player
+                    $newCard = $this->cards->pickCard('deck', $player_id);
+                    $this->addExtraCardPropertiesFromMaterial($newCard);
+                    $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
+                    self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
+                        'card_name' => $newCard_name,
+                        'card' => $newCard
+                    ));
+                }
+
+                // Notify all players about the drawing card
+                $totalcardsondeck = $this->cards->countCardInLocation('deck');
+                self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw 3 cards' ), array(
+                    'player_name' => self::getActivePlayerName(),
+                    'totalcardsondeck' => $totalcardsondeck
+                ));
+            }
+        }
+
+        $this->activeNextPlayer();
+        $this->gamestate->nextState('playerTurn');
     }
 
 //////////////////////////////////////////////////////////////////////////////
