@@ -15,7 +15,7 @@
 $gameinfos = array(
 
 // Name of the game in English (will serve as the basis for translation)
-'game_name' => clienttranslate("Tic Tac Match"),
+'game_name' => totranslate("Tic Tac Match"),
 
 // Game designer (or game designers, separated by commas)
 'designer' => 'Larry Ashlock',
@@ -27,7 +27,7 @@ $gameinfos = array(
 'year' => 2020,
 
 // Game publisher (use empty string if there is no publisher)
-'publisher' => clienttranslate('WAY Funner Games LLC'),
+'publisher' => totranslate('WAY Funner Games LLC'),
 
 // Url of game publisher website
 'publisher_website' => 'https://www.tictacmatch.com/',
@@ -120,7 +120,7 @@ $gameinfos = array(
     //  default: 740
     //  maximum possible value: 740 (ie: your game interface should fit with a 740px width (correspond to a 1024px screen)
     //  minimum possible value: 320 (the lowest value you specify, the better the display is on mobile)
-    'min' => 320,
+    'min' => 375,
 
     // Maximum width
     //  default: null (ie: no limit, the game interface is as big as the player's screen allows it).
@@ -134,9 +134,7 @@ $gameinfos = array(
 // Each paragraph must be wrapped with totranslate() for translation and should not contain html (plain text without formatting).
 // A good length for this text is between 100 and 150 words (about 6 to 9 lines on a standard display)
 'presentation' => array(
-//    totranslate("This wonderful game is about geometric shapes!"),
-//    totranslate("It was awarded best triangle game of the year in 2005 and nominated for the Spiel des Jahres."),
-//    ...
+   totranslate("Tic-Tac Match is a wildly unpredictable card game variation of the classic game tic-tac-toe. Just a few minutes to learn provides hours of enjoyment. Challenge your opponent to match three cards in a row of BOTH the same symbol and the same color by stacking on cards already in play. But don’t be fooled by the simple rules. Action Cards interject deep strategies that guarantee a winner every time. Players can flip sides mid-game, wipe out their opponent’s hand or play two cards on a single turn. There is even a team-play version for four players.")
 ),
 
 // Games tags (categories)
@@ -147,7 +145,7 @@ $gameinfos = array(
 //  IMPORTANT: this list should be ORDERED, with the most important tag first.
 //  NOTE: tags are only read during the first deploy from the file gameinfos.inc.php; afterwards, BGA is responsible for setting tags for a game.
 
-'tags' => array( 2, 10, 26, 200, 204 ),
+'tags' => array( 2, 10, 26, 30, 200, 204 ),
 
 
 //////// BGA SANDBOX ONLY PARAMETERS (DO NOT MODIFY)
