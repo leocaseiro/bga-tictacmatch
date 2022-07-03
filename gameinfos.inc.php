@@ -15,7 +15,7 @@
 $gameinfos = array(
 
 // Name of the game in English (will serve as the basis for translation)
-'game_name' => "Tic Tac Match",
+'game_name' => clienttranslate("Tic Tac Match"),
 
 // Game designer (or game designers, separated by commas)
 'designer' => 'Larry Ashlock',
@@ -27,7 +27,7 @@ $gameinfos = array(
 'year' => 2020,
 
 // Game publisher (use empty string if there is no publisher)
-'publisher' => 'WAY Funner Games LLC',
+'publisher' => clienttranslate('WAY Funner Games LLC'),
 
 // Url of game publisher website
 'publisher_website' => 'https://www.tictacmatch.com/',
