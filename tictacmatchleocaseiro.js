@@ -67,13 +67,13 @@ function (dojo, declare) {
                 const domId = `js-card-${id}`;
                 const cardDiv = self.getCardDiv(domId, id, card);
                 dojo.place(cardDiv, 'js-hand__cards');
-                this.addTooltip(domId, _(`${card.value} ${card.color}`), _('Click to select card'));
+                this.addTooltip(domId, card.label, _('Click to select card'));
                 dojo.connect($(domId), 'onclick', this, this.onHandCardClick);
             });
 
             // Add event listeners to Grid cells
             Array.from(document.querySelectorAll('[id^="js-board-cell--"]')).forEach(function(el) {
-                self.addTooltip(el.id, _('Card cell'), _('Click to place card'));
+                self.addTooltip(el.id, _('Card space'), _('Click to place card'));
                 dojo.connect($(el.id), 'onclick', self, self.onGridCardClick);
             });
 
@@ -88,7 +88,7 @@ function (dojo, declare) {
                 this.removeTooltip(domId);
 
                 dojo.place(cardDiv, domId, 'replace');
-                this.addTooltip(domId, _(`${card.value} ${card.color}`), _(`Click to place a ${card.value} card or a ${card.color} card`));
+                this.addTooltip(domId, card.label, _(`Click to place a ${card.value === 'X' ? "X" : "0"} card or a ${card.colorLabel} card`));
                 const $el = $(domId);
                 if ($el) {
                     dojo.setAttr($el, 'data-cell', i);
@@ -104,7 +104,6 @@ function (dojo, declare) {
                 const domId = 'js-discard-pile-card';
                 const discardPileCardDiv = self.getCardDiv(domId, this.topDiscardPile.id, this.topDiscardPile);
                 dojo.place(discardPileCardDiv, domId, 'replace');
-                this.addTooltip(domId, _('Discard Pile'), _('Click to discard card'));
             }
 
             // Show number of cards on Discard Pile
@@ -251,7 +250,7 @@ function (dojo, declare) {
 
             this.replaceCardAttributes(card, domId);
             this.removeTooltip(domId);
-            this.addTooltip(domId, _(`${card.value} ${card.color}`), _(`Click to place a ${card.value} card or a ${card.color} card`));
+            this.addTooltip(domId, card.label, _(`Click to place a ${card.value === 'X' ? "X" : "0"} card or a ${card.colorLabel} card`));
         },
         replaceCardOnDiscardPile: function(card) {
             this.replaceCardAttributes(card, 'js-discard-pile-card');
@@ -384,7 +383,7 @@ function (dojo, declare) {
 
             if (this.selectedCard.color === 'action') {
                 switch (this.selectedCard.value) {
-                    case 'wipe out card':
+                    case 'wipe_out_card':
                         const keys = Object.values(this.gamedatas.players)
                             .filter(player => player.id != this.getCurrentPlayerId())
                             .map(player => player.name);
@@ -402,8 +401,8 @@ function (dojo, declare) {
                             }
                         );
                         break;
-                    case 'flip card':
-                    case 'double play card':
+                    case 'flip_card':
+                    case 'double_play_card':
                     default:
                         this.ajaxcall(
                             '/tictacmatchleocaseiro/tictacmatchleocaseiro/playAction.html',
@@ -572,7 +571,7 @@ function (dojo, declare) {
             dojo.place(cardDiv, 'js-deck');
 
             this.slide(cardSelector, destinationSelector);
-            this.addTooltip(cardSelector, _(`${card.value} ${card.color}`), _('Click to select card'));
+            this.addTooltip(cardSelector, card.label, _('Click to select card'));
             dojo.connect($(cardSelector), 'onclick', this, this.onHandCardClick);
         },
 
@@ -598,7 +597,6 @@ function (dojo, declare) {
                 const duration = this.randomInteger(500, 1200);
                 const backCard = this.format_block('jstpl_back_card', { DOMID: cardId });
                 dojo.place(backCard, from);
-                // this.slide(cardId, to, { destroy: true });
                 this.slide(cardId, to, { clearPos: false, duration: duration });
             }
         },

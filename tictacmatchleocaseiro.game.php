@@ -149,8 +149,36 @@ class tictacmatchleocaseiro extends Table
 
         // Init game statistics
         // (note: statistics used in this file must be defined in your stats.inc.php file)
-        //self::initStat( 'table', 'table_teststat1', 0 );    // Init a table statistics
-        //self::initStat( 'player', 'player_teststat1', 0 );  // Init a player statistics (for all players)
+        self::initStat( 'table', 'turns_number', 0 );
+        self::initStat( 'player', 'turns_number', 0 );
+        self::initStat( 'table', 'cards_played', 0 );
+        self::initStat( 'player', 'cards_played', 0 );
+        self::initStat( 'table', 'symbol_cards_on_empty_space', 0 );
+        self::initStat( 'player', 'symbol_cards_on_empty_space', 0 );
+        self::initStat( 'table', 'blue_cards', 0 );
+        self::initStat( 'player', 'blue_cards', 0 );
+        self::initStat( 'table', 'green_cards', 0 );
+        self::initStat( 'player', 'green_cards', 0 );
+        self::initStat( 'table', 'red_cards', 0 );
+        self::initStat( 'player', 'red_cards', 0 );
+        self::initStat( 'table', 'yellow_cards', 0 );
+        self::initStat( 'player', 'yellow_cards', 0 );
+        self::initStat( 'table', 'x_cards', 0 );
+        self::initStat( 'player', 'x_cards', 0 );
+        self::initStat( 'table', 'o_cards', 0 );
+        self::initStat( 'player', 'o_cards', 0 );
+        self::initStat( 'table', 'symbol_cards_value_replaced', 0 );
+        self::initStat( 'player', 'symbol_cards_value_replaced', 0 );
+        self::initStat( 'table', 'symbol_cards_color_replaced', 0 );
+        self::initStat( 'player', 'symbol_cards_color_replaced', 0 );
+        self::initStat( 'table', 'flip_cards_played', 0 );
+        self::initStat( 'player', 'flip_cards_played', 0 );
+        self::initStat( 'table', 'wipe_out_cards_played', 0 );
+        self::initStat( 'player', 'wipe_out_cards_played', 0 );
+        self::initStat( 'table', 'double_play_cards_played', 0 );
+        self::initStat( 'player', 'double_play_cards_played', 0 );
+        self::initStat( 'table', 'reshuffle_draw_pile', 0 );
+        self::initStat( 'player', 'wiped_out_cards_player', 0 );
 
         // setup the initial game situation here
         self::setGameStateInitialValue( self::HAS_WINNER, false );
@@ -335,6 +363,8 @@ class tictacmatchleocaseiro extends Table
                 'card' => $newCard
             ));
         }
+
+        self::incStat(1, 'wiped_out_cards_player', $player_id);
     }
 
     function checkWinner() {
@@ -433,12 +463,52 @@ class tictacmatchleocaseiro extends Table
 
         // shuffle new deck
         $this->cards->shuffle('deck');
+        self::incStat(1, 'reshuffle_draw_pile');
 
         // Notify all players about the new draw pile
         self::notifyAllPlayers( "reShuffleDeck", clienttranslate( 'Draw pile was empty, making new draw pile from discarded cards and covered cards' ), array(
             'totalcardsondeck' => $this->cards->countCardInLocation('deck'),
             'totalcardsondiscardpile' => $this->cards->countCardInLocation('discardpile')
         ));
+    }
+
+    function setStatsForCardPlayedOnCell($card, $playingGridCard, $player_id) {
+        self::incStat(1, 'cards_played');
+        self::incStat(1, 'cards_played', $player_id);
+
+        // blue_cards, green_cards, red_cards, yellow_cards
+        self::incStat(1, $card['color'] . '_cards');
+        self::incStat(1, $card['color'] . '_cards', $player_id);
+
+        // x_cards, o_cards
+        self::incStat(1, strtolower($card['value']) . '_cards');
+        self::incStat(1, strtolower($card['value']) . '_cards', $player_id);
+
+        if (!$playingGridCard) {
+            self::incStat(1, 'symbol_cards_on_empty_space');
+            self::incStat(1, 'symbol_cards_on_empty_space', $player_id);
+        }
+
+        if ($playingGridCard) {
+            if ($card['value'] != $playingGridCard['value']) {
+                self::incStat(1, 'symbol_cards_value_replaced');
+                self::incStat(1, 'symbol_cards_value_replaced', $player_id);
+            }
+
+            if ($card['color'] != $playingGridCard['color']) {
+                self::incStat(1, 'symbol_cards_color_replaced');
+                self::incStat(1, 'symbol_cards_color_replaced', $player_id);
+            }
+        }
+    }
+
+    function setStatsForActionCardPlayed($card, $player_id) {
+        self::incStat(1, 'cards_played');
+        self::incStat(1, 'cards_played', $player_id);
+
+        // flip_cards_played, wipe_out_cards_played, double_play_cards_played
+        self::incStat(1, $card['value'] . 's_played');
+        self::incStat(1, $card['value'] . 's_played', $player_id);
     }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -463,6 +533,11 @@ class tictacmatchleocaseiro extends Table
 
         $this->addExtraCardPropertiesFromMaterial($card);
 
+        if ($card['type'] !== 'symbol') {
+            throw new BgaUserException(self::_('You need to select a symbol card to play at the table!'));
+            return;
+        }
+
         if($playingGridCard) {
             $this->addExtraCardPropertiesFromMaterial($playingGridCard);
 
@@ -479,6 +554,7 @@ class tictacmatchleocaseiro extends Table
 
         $this->cards->insertCardOnExtremePosition($card_id, $card_location, true);
         $card_name = $card['value'] . ' ' . $card['color'];
+        $this->setStatsForCardPlayedOnCell($card, $playingGridCard, $player_id);
 
         // Notify all players about the card played
         self::notifyAllPlayers( "cardPlayed", clienttranslate( '${player_name} plays ${card_name}' ), array(
@@ -542,23 +618,25 @@ class tictacmatchleocaseiro extends Table
         $do_action = false;
 
         // Do Action
-        switch ($card['class']) {
+        switch ($card['value']) {
             // Flip card
-            case 'action_flip':
+            case 'flip_card':
                 $this->toggleTeam();
                 $action['teams'] = [
                     'even' => $this->getTeamValue(self::getGameStateValue(self::TEAM_EVEN)),
                     'odd' => $this->getTeamValue(self::getGameStateValue(self::TEAM_ODD))
                 ];
                 break;
-            case 'action_2plus':
+            case 'double_play_card':
                 self::setGameStateValue(self::DOUBLE_PLAY_PLAYER, self::getActivePlayerId());
                 $do_action = 'action_2plus';
                 break;
-            case 'action_wipe_out':
+            case 'wipe_out_card':
                 $do_action = 'action_wipe_out';
                 break;
         }
+
+        $this->setStatsForActionCardPlayed($card, $player_id);
 
         $this->cards->insertCardOnExtremePosition($card_id, 'discardpile', true);
         $card_name = $card['value'];
@@ -654,7 +732,7 @@ class tictacmatchleocaseiro extends Table
     {
         // End of the game!
         if (self::getGameStateValue(self::HAS_WINNER)) {
-            // TODO notification for the winner
+            // TODO notification for the winner for both players on 4p
             $this->gamestate->nextState('endGame');
             return;
         }

@@ -47,49 +47,102 @@
 
 */
 
+$common_stats = array(
+    "turns_number" => array(
+        "id"=> 10,
+        "name" => clienttranslate("Number of turns"),
+        "type" => "int"
+    ),
+    "cards_played" => array(
+        "id"=> 11,
+        "name" => clienttranslate("Number of cards played"),
+        "type" => "int"
+    ),
+    "symbol_cards_on_empty_space" => array(
+        "id"=> 12,
+        "name" => clienttranslate("Number of symbol cards placed on empty spaces"),
+        "type" => "int"
+    ),
+    "blue_cards" => array(
+        "id"=> 13,
+        "name" => clienttranslate("Number of blue cards played"),
+        "type" => "int"
+    ),
+    "green_cards" => array(
+        "id"=> 14,
+        "name" => clienttranslate("Number of green cards played"),
+        "type" => "int"
+    ),
+    "red_cards" => array(
+        "id"=> 15,
+        "name" => clienttranslate("Number of red cards played"),
+        "type" => "int"
+    ),
+    "yellow_cards" => array(
+        "id"=> 16,
+        "name" => clienttranslate("Number of yellow cards played"),
+        "type" => "int"
+    ),
+    "x_cards" => array(
+        "id"=> 17,
+        "name" => clienttranslate("Number of 'X' cards played"),
+        "type" => "int"
+    ),
+    "o_cards" => array(
+        "id"=> 18,
+        "name" => clienttranslate("Number of '0' cards played"),
+        "type" => "int"
+    ),
+    "symbol_cards_value_replaced" => array(
+        "id"=> 19,
+        "name" => clienttranslate("Number of symbol cards replaced with different value"),
+        "type" => "int"
+    ),
+    "symbol_cards_color_replaced" => array(
+        "id"=> 20,
+        "name" => clienttranslate("Number of symbol cards replaced with different color"),
+        "type" => "int"
+    ),
+    "flip_cards_played" => array(
+        "id"=> 21,
+        "name" => clienttranslate("Number of Flip cards played"),
+        "type" => "int"
+    ),
+    "wipe_out_cards_played" => array(
+        "id"=> 22,
+        "name" => clienttranslate("Number of Wipe Out cards played"),
+        "type" => "int"
+    ),
+    "double_play_cards_played" => array(
+        "id"=> 23,
+        "name" => clienttranslate("Number of Double Play cards played"),
+        "type" => "int"
+    ),
+);
+
 $stats_type = array(
-
     // Statistics global to table
-    "table" => array(
-
-        "turns_number" => array("id"=> 10,
-                    "name" => totranslate("Number of turns"),
-                    "type" => "int" ),
-
-/*
-        Examples:
-
-
-        "table_teststat1" => array(   "id"=> 10,
-                                "name" => totranslate("table test stat 1"),
-                                "type" => "int" ),
-
-        "table_teststat2" => array(   "id"=> 11,
-                                "name" => totranslate("table test stat 2"),
-                                "type" => "float" )
-*/
+    "table" => $common_stats + array(
+        "reshuffle_draw_pile" => array(
+            "id"=> 24,
+            "name" => clienttranslate("Number of times that draw pile was reshuffled"),
+            "type" => "int"
+        ),
     ),
 
     // Statistics existing for each player
-    "player" => array(
+    "player" => $common_stats + array(
+        "wiped_out_cards_player" => array(
+            "id"=> 25,
+            "name" => clienttranslate("Number of times player had cards wiped out"),
+            "type" => "int"
+        ),
+    ),
 
-        "turns_number" => array("id"=> 10,
-                    "name" => totranslate("Number of turns"),
-                    "type" => "int" ),
-
-/*
-        Examples:
-
-
-        "player_teststat1" => array(   "id"=> 10,
-                                "name" => totranslate("player test stat 1"),
-                                "type" => "int" ),
-
-        "player_teststat2" => array(   "id"=> 11,
-                                "name" => totranslate("player test stat 2"),
-                                "type" => "float" )
-
-*/
+    "value_labels" => array(
+		24 => array(
+			0 => clienttranslate("None"),
+        ),
     )
 
 );

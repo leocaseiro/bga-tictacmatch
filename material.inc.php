@@ -26,7 +26,9 @@ $this->ttm_cards = [
     'nbr' => 6,
     'class' => 'blue_x',
     'color' => 'blue',
-    'value' => 'X'
+    'value' => 'X',
+    'label' => clienttranslate('Blue X'),
+    'colorLabel' => clienttranslate('Blue')
   ],
   1 => [
     'type' => 'symbol',
@@ -34,7 +36,9 @@ $this->ttm_cards = [
     'nbr' => 6,
     'class' => 'blue_o',
     'color' => 'blue',
-    'value' => 'O'
+    'value' => 'O',
+    'label' => clienttranslate('Blue 0'),
+    'colorLabel' => clienttranslate('Blue')
   ],
   2 => [
     'type' => 'symbol',
@@ -42,7 +46,9 @@ $this->ttm_cards = [
     'nbr' => 6,
     'class' => 'green_x',
     'color' => 'green',
-    'value' => 'X'
+    'value' => 'X',
+    'label' => clienttranslate('Green X'),
+    'colorLabel' => clienttranslate('Green')
   ],
   3 => [
     'type' => 'symbol',
@@ -50,7 +56,9 @@ $this->ttm_cards = [
     'nbr' => 6,
     'class' => 'green_o',
     'color' => 'green',
-    'value' => 'O'
+    'value' => 'O',
+    'label' => clienttranslate('Green 0'),
+    'colorLabel' => clienttranslate('Green')
   ],
   4 => [
     'type' => 'symbol',
@@ -58,7 +66,9 @@ $this->ttm_cards = [
     'nbr' => 6,
     'class' => 'red_x',
     'color' => 'red',
-    'value' => 'X'
+    'value' => 'X',
+    'label' => clienttranslate('Red X'),
+    'colorLabel' => clienttranslate('Red')
   ],
   5 => [
     'type' => 'symbol',
@@ -66,7 +76,9 @@ $this->ttm_cards = [
     'nbr' => 6,
     'class' => 'red_o',
     'color' => 'red',
-    'value' => 'O'
+    'value' => 'O',
+    'label' => clienttranslate('Red 0'),
+    'colorLabel' => clienttranslate('Red')
   ],
   6 => [
     'type' => 'symbol',
@@ -74,7 +86,9 @@ $this->ttm_cards = [
     'nbr' => 6,
     'class' => 'yellow_x',
     'color' => 'yellow',
-    'value' => 'X'
+    'value' => 'X',
+    'label' => clienttranslate('Yellow X'),
+    'colorLabel' => clienttranslate('Yellow')
   ],
   7 => [
     'type' => 'symbol',
@@ -82,7 +96,9 @@ $this->ttm_cards = [
     'nbr' => 6,
     'class' => 'yellow_o',
     'color' => 'yellow',
-    'value' => 'O'
+    'value' => 'O',
+    'label' => clienttranslate('Yellow 0'),
+    'colorLabel' => clienttranslate('Yellow')
   ],
   8 => [
     'type' => 'action',
@@ -90,7 +106,8 @@ $this->ttm_cards = [
     'nbr' => 4,
     'class' => 'action_2plus',
     'color' => 'action',
-    'value' => 'double play card'
+    'value' => 'double_play_card',
+    'label' => clienttranslate('Double Play Card')
   ],
   9 => [
     'type' => 'action',
@@ -98,7 +115,8 @@ $this->ttm_cards = [
     'nbr' => 4,
     'class' => 'action_flip',
     'color' => 'action',
-    'value' => 'flip card'
+    'value' => 'flip_card',
+    'label' => clienttranslate('Flip Card')
   ],
   10 => [
     'type' => 'action',
@@ -106,22 +124,7 @@ $this->ttm_cards = [
     'nbr' => 4,
     'class' => 'action_wipe_out',
     'color' => 'action',
-    'value' => 'wipe out card'
+    'value' => 'wipe_out_card',
+    'label' => clienttranslate('Wipe Out Card')
   ],
 ];
-/*
-
-Example:
-
-$this->card_types = array(
-    1 => array( "card_name" => ...,
-                ...
-              )
-);
-$this->card = array(
-   0 => array(
-     'cardtype' => FRUIT,
-     'subtype' => ACAI_BERRY,
-     'count' => 6
-   ),
-*/
