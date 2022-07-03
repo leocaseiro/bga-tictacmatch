@@ -55,6 +55,10 @@
     --tictacmatchCardHeight: 358px;
 }
 
+.hide {
+    visibility: hidden;
+}
+
 .ttm-table {
     align-items: center;
     display: flex;
@@ -86,6 +90,9 @@
     display: flex;
     margin-top: 2em;
     justify-content: space-evenly;
+}
+.spectatorMode .ttm-hand {
+    visibility: hidden;
 }
 
 .ttm-hand__cards {

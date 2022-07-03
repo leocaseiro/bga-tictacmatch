@@ -355,7 +355,10 @@ function (dojo, declare) {
         },
 
         flipTeamCard() {
-            const teamCardClass = `card-flip card-flip--flipped-${this.getTeamValue().toLowerCase()}`;
+            let teamCardClass = 'hide'; // spectator
+            if (!this.isSpectator) {
+                teamCardClass = `card-flip card-flip--flipped-${this.getTeamValue().toLowerCase()}`;
+            }
             dojo.setAttr('js-team-card', 'class', teamCardClass);
         },
 
