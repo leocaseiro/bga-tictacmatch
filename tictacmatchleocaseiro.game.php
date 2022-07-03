@@ -257,8 +257,8 @@ class tictacmatchleocaseiro extends Table
     */
     function getGameProgression()
     {
-        // TODO: compute and return the game progression
-
+        // There isn't a proper way to detect progression of TIC TAC MATCH, so we disabled
+        // updateGameProgression => false
         return 0;
     }
 
