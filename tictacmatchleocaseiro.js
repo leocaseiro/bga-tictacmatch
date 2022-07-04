@@ -144,7 +144,8 @@ function (dojo, declare, noUiSlider) {
                     } else {
                         this.removeClassFromSelector('#js-hand__cards .card', 'card--selectable');
                     }
-                case 'endGame':
+                    break;
+                case 'gameEnd':
                     this.removeClassFromSelector('.card--selectable', 'card--selectable');
                     this.removeClassFromSelector('.card--selected', 'card--selected');
                     break;
