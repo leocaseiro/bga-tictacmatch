@@ -797,7 +797,8 @@ class tictacmatchleocaseiro extends Table
             }
         }
 
-        $this->activeNextPlayer();
+        $player_id = $this->activeNextPlayer();
+        self::giveExtraTime($player_id);
         $this->gamestate->nextState('playerTurn');
     }
 
