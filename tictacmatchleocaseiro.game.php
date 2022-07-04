@@ -18,6 +18,11 @@
 
 
 require_once( APP_GAMEMODULE_PATH.'module/table/table.game.php' );
+require_once('modules/php/Helpers/Collection.php');
+require_once('modules/php/Helpers/DB_Manager.php');
+require_once('modules/php/Helpers/QueryBuilder.php');
+require_once('modules/php/Core/UserPreferences.php');
+
 class tictacmatchleocaseiro extends Table
 {
 	// Team pairing constants  (ripped off from Coinche)
@@ -40,6 +45,7 @@ class tictacmatchleocaseiro extends Table
     const DOUBLE_PLAY_PLAYER = 'double_play_player';
     const DOUBLE_PLAY_CARDS = 'double_play_cards';
 
+    public static $instance = null;
 
 	function __construct( )
 	{
@@ -50,6 +56,7 @@ class tictacmatchleocaseiro extends Table
         //  the corresponding ID in gameoptions.inc.php.
         // Note: afterwards, you can get/set the global variables with getGameStateValue/setGameStateInitialValue/setGameStateValue
         parent::__construct();
+        self::$instance = $this;
 
         self::initGameStateLabels( array(
             self::PLAYER_TEAMS => 100,
@@ -63,6 +70,11 @@ class tictacmatchleocaseiro extends Table
         $this->cards = self::getNew( "module.common.deck" );
         $this->cards->init( "card" );
 	}
+
+    public static function get()
+    {
+        return self::$instance;
+    }
 
     protected function getGameName( )
     {
@@ -220,6 +232,9 @@ class tictacmatchleocaseiro extends Table
             self::setGameStateInitialValue( self::TEAM_ODD, self::TEAM_O );
         }
 
+        // User Preferences (from tisaac boilerplate)
+        UserPreferences::setupNewGame($players, $options);
+
         // Activate first player (which is in general a good idea :) )
         $this->activeNextPlayer();
 
@@ -269,6 +284,9 @@ class tictacmatchleocaseiro extends Table
             'even' => $this->getTeamValue(self::getGameStateValue(self::TEAM_EVEN)),
             'odd' => $this->getTeamValue(self::getGameStateValue(self::TEAM_ODD))
         ];
+
+        // User Preferences
+        $result['prefs'] = UserPreferences::getUiData($current_player_id);
 
         return $result;
     }

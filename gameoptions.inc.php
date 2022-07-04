@@ -36,3 +36,5 @@ $game_options = array(
         'default' => 4
     ),
 );
+
+$game_preferences = array();
