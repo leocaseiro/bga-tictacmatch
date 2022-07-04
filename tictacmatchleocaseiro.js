@@ -18,11 +18,12 @@
 define([
     "dojo",
     "dojo/_base/declare",
+    g_gamethemeurl + 'modules/js/vendor/nouislider.min.js',
     "dojo/NodeList-traverse",
     "ebg/core/gamegui",
     "ebg/counter",
 ],
-function (dojo, declare) {
+function (dojo, declare, noUiSlider) {
     return declare("bgagame.tictacmatchleocaseiro", ebg.core.gamegui, {
         constructor: function(){
             console.log('tictacmatchleocaseiro constructor');
@@ -32,6 +33,7 @@ function (dojo, declare) {
             // this.myGlobalValue = 0;
             this.playerHand = null;
             this.selectedCard = {};
+            this._cardScale = this.getConfig('tictacmatchCardScale', 45);
         },
 
         /*
@@ -114,6 +116,9 @@ function (dojo, declare) {
 
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
+
+            // User Preferences settings
+            this.setupSettings();
 
             console.log( "Ending game setup" );
         },
@@ -203,11 +208,17 @@ function (dojo, declare) {
         //// Utility methods
 
         /*
-
             Here, you can defines some utility methods that you can use everywhere in your javascript
             script.
-
         */
+
+        /*
+        * Detect if spectator or replay
+        */
+        isReadOnly() {
+        return this.isSpectator || typeof g_replayFrom != 'undefined' || g_archive_mode;
+      },
+
         randomInteger(min, max) {
             return Math.floor(Math.random() * (max - min + 1)) + min;
         },
@@ -685,6 +696,70 @@ function (dojo, declare) {
                     this.removeClassFromSelector('#js-hand__cards .card', 'card--selectable');
                 }
             });
+        },
+
+
+
+       /***********************************
+       ************* Settings ************
+       ***********************************/
+
+      setupSettings() {
+        dojo.place(
+          this.format_string(jstpl_configPlayerBoard, {
+            cardSize: _('Size of cards'),
+          }),
+          'player_boards',
+          'first',
+        );
+        dojo.connect($('show-settings'), 'click', () => this.toggleSettings());
+        this.addTooltip('show-settings', '', _('Display some settings about the game.'));
+
+        this._cardScaleSlider = document.getElementById('layout-control-card-size');
+        noUiSlider.create(this._cardScaleSlider, {
+          start: [this._cardScale],
+          step: 2   ,
+          padding: 2,
+          range: {
+            min: [20],
+            max: [70],
+          },
+        });
+        this._cardScaleSlider.noUiSlider.on('slide', (arg) => this.setCardScale(parseInt(arg[0])));
+        this.setCardScale(this._cardScale);
+      },
+
+
+
+    /* Helper to work with local storage */
+    getConfig(value, v) {
+        return localStorage.getItem(value) == null ? v : localStorage.getItem(value);
+    },
+
+      /**
+       * Change the scale for playing cards
+       */
+      setCardScale(scale) {
+        this._cardScale = scale;
+        $('ebd-body').style.setProperty('--tictacmatchCardScale', scale / 100);
+        localStorage.setItem('tictacmatchCardScale', scale);
+      },
+
+      /**
+       * toggleSettings: open/close the settings inside the panel
+       */
+       toggleSettings(container = 'settings-controls-container') {
+        dojo.toggleClass(container, 'settingsControlsHidden');
+
+        // Hacking BGA framework
+        if (dojo.hasClass('ebd-body', 'mobile_version')) {
+          dojo.query('.player-board').forEach((elt) => {
+            if (elt.style.height != 'auto') {
+              dojo.style(elt, 'min-height', elt.style.height);
+              elt.style.height = 'auto';
+            }
+          });
         }
+      },
    });
 });
