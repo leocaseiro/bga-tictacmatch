@@ -8,7 +8,7 @@
     See documentation about this file here:
     http://en.doc.boardgamearena.com/Game_meta-information:_gameinfos.inc.php
 
-    tictacmatchleocaseiro implementation : © Leo Caseiro <leo@leocaseiro.com>
+    tictacmatch implementation : © Leo Caseiro <leo@leocaseiro.com>
 
 */
 

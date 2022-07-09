@@ -2,13 +2,13 @@
  /**
   *------
   * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
-  * tictacmatchleocaseiro implementation : © Leo Caseiro <leo@leocaseiro.com>
+  * tictacmatch implementation : © Leo Caseiro <leo@leocaseiro.com>
   *
   * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
   * See http://en.boardgamearena.com/#!doc/Studio for more information.
   * -----
   *
-  * tictacmatchleocaseiro.game.php
+  * tictacmatch.game.php
   *
   * This is the main file for your game logic.
   *
@@ -23,7 +23,7 @@ require_once('modules/php/Helpers/DB_Manager.php');
 require_once('modules/php/Helpers/QueryBuilder.php');
 require_once('modules/php/Core/UserPreferences.php');
 
-class tictacmatchleocaseiro extends Table
+class tictacmatch extends Table
 {
 	// Team pairing constants  (ripped off from Coinche)
 	const TEAM_1_3 = 1;
@@ -79,7 +79,7 @@ class tictacmatchleocaseiro extends Table
     protected function getGameName( )
     {
 		// Used for translations and stuff. Please do not modify.
-        return "tictacmatchleocaseiro";
+        return "tictacmatch";
     }
 
     /*
@@ -547,7 +547,7 @@ class tictacmatchleocaseiro extends Table
 
     /*
         Each time a player is doing some game action, one of the methods below is called.
-        (note: each method below must match an input method in tictacmatchleocaseiro.action.php)
+        (note: each method below must match an input method in tictacmatch.action.php)
     */
 
     function playCard( $cell_location, $card_id )

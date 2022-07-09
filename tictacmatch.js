@@ -1,15 +1,15 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * tictacmatchleocaseiro implementation : © Leo Caseiro <leo@leocaseiro.com>
+ * tictacmatch implementation : © Leo Caseiro <leo@leocaseiro.com>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  *
- * tictacmatchleocaseiro.js
+ * tictacmatch.js
  *
- * tictacmatchleocaseiro user interface script
+ * tictacmatch user interface script
  *
  * In this file, you are describing the logic of your user interface, in Javascript language.
  *
@@ -24,9 +24,9 @@ define([
     "ebg/counter",
 ],
 function (dojo, declare, noUiSlider) {
-    return declare("bgagame.tictacmatchleocaseiro", ebg.core.gamegui, {
+    return declare("bgagame.tictacmatch", ebg.core.gamegui, {
         constructor: function(){
-            console.log('tictacmatchleocaseiro constructor');
+            console.log('tictacmatch constructor');
 
             // Here, you can init the global variables of your user interface
             // Example:
@@ -431,7 +431,7 @@ function (dojo, declare, noUiSlider) {
                             const playerChosenName = keys[choice];
                             const playerChosen = Object.values(this.gamedatas.players)
                                 .find(player => player.name == playerChosenName);
-                            this.ajaxcall( '/tictacmatchleocaseiro/tictacmatchleocaseiro/playAction.html', {
+                            this.ajaxcall( '/tictacmatch/tictacmatch/playAction.html', {
                                 lock: true,
                                 cardId: this.selectedCard.id,
                                 playerChosen: playerChosen.id
@@ -443,7 +443,7 @@ function (dojo, declare, noUiSlider) {
                 case 'double_play_card':
                 default:
                     this.ajaxcall(
-                        '/tictacmatchleocaseiro/tictacmatchleocaseiro/playAction.html',
+                        '/tictacmatch/tictacmatch/playAction.html',
                         {
                             lock: true,
                             cardId: this.selectedCard.id,
@@ -484,7 +484,7 @@ function (dojo, declare, noUiSlider) {
             }
 
             this.ajaxcall(
-                '/tictacmatchleocaseiro/tictacmatchleocaseiro/playCard.html',
+                '/tictacmatch/tictacmatch/playCard.html',
                 {
                     lock: true,
                     cellLocation: cell.cell,
@@ -504,7 +504,7 @@ function (dojo, declare, noUiSlider) {
             In this method, you associate each of your game notifications with your local method to handle it.
 
             Note: game notification names correspond to "notifyAllPlayers" and "notifyPlayer" calls in
-                  your tictacmatchleocaseiro.game.php file.
+                  your tictacmatch.game.php file.
 
         */
         setupNotifications: function()

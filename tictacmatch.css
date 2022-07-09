@@ -1,15 +1,15 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * tictacmatchleocaseiro implementation : © Leo Caseiro <leo@leocaseiro.com>
+ * tictacmatch implementation : © Leo Caseiro <leo@leocaseiro.com>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  *
- * tictacmatchleocaseiro.css
+ * tictacmatch.css
  *
- * tictacmatchleocaseiro stylesheet
+ * tictacmatch stylesheet
  *
  */
 
@@ -17,8 +17,8 @@
     This is the CSS stylesheet of your game User Interface.
 
     Styles defined on this file will be applied to the HTML elements you define in your
-    HTML template (tictacmatchleocaseiro_tictacmatchleocaseiro.tpl), and to HTML elements you create dynamically
-    (in tictacmatchleocaseiro.js).
+    HTML template (tictacmatch_tictacmatch.tpl), and to HTML elements you create dynamically
+    (in tictacmatch.js).
 
     Usually, you are using CSS to:
 

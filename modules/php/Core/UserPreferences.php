@@ -55,7 +55,7 @@ class UserPreferences extends DB_Manager
     // Load user preferences
     include dirname(__FILE__) . '/../../../gameoptions.inc.php';
 
-    $playerIds = array_keys(tictacmatchleocaseiro::get()->loadPlayersBasicInfos());
+    $playerIds = array_keys(tictacmatch::get()->loadPlayersBasicInfos());
     $preferences = $game_preferences + self::getLocalPrefsData();
     $values = [];
     foreach ($preferences as $id => $data) {
