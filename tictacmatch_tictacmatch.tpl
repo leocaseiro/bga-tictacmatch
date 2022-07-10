@@ -66,7 +66,7 @@ var jstpl_playerPanel = `
 
   <div class="panel-cards" id="cards-in-hand-\${pId}">
     <div class="card card--back"></div>
-    <span class="cards-in-hand-counter" id="js-cards-in-hands-counter-\${pId}">4</span>
+    <span class="cards-in-hand-counter" id="js-cards-in-hands-counter-\${pId}">0</span>
   </div>
 </div>`;
 var jstpl_configPlayerBoard = `

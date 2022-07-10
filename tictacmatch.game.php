@@ -285,7 +285,7 @@ class tictacmatch extends Table
             'odd' => $this->getTeamValue(self::getGameStateValue(self::TEAM_ODD))
         ];
         // Add teams for each player on gamedatas
-        $this->addTeamsToPlayers($result['players']);
+        $this->addExtraPropsToPlayers($result['players']);
 
         // User Preferences
         $result['prefs'] = UserPreferences::getUiData($current_player_id);
@@ -315,11 +315,12 @@ class tictacmatch extends Table
 //////////// Utility functions
 ////////////
 
-    function addTeamsToPlayers(&$players) {
+    function addExtraPropsToPlayers(&$players) {
         foreach ($players as $playerIndex => $player) {
             $even = $this->getTeamValue(self::getGameStateValue(self::TEAM_EVEN));
             $odd = $this->getTeamValue(self::getGameStateValue(self::TEAM_ODD));
             $player['player_team'] = (int) $player['player_no'] % 2 == 0 ? $even : $odd;
+            $player['nCards'] = $this->cards->countCardInLocation('hand', $playerIndex);
             $players[$playerIndex] = $player;
         }
     }
@@ -570,8 +571,8 @@ class tictacmatch extends Table
 
         $card_location = 'cell-' . $cell_location;
         $playingGridCard = $this->cards->getCardOnTop($card_location);
-        $card = $this->cards->getCard($card_id);
 
+        $card = $this->cards->getCard($card_id);
         $this->addExtraCardPropertiesFromMaterial($card);
 
         if ($card['type'] !== 'symbol') {
@@ -597,13 +598,17 @@ class tictacmatch extends Table
         $card_name = $card['value'] . ' ' . $card['color'];
         $this->setStatsForCardPlayedOnCell($card, $playingGridCard, $player_id);
 
+        $players = self::loadPlayersBasicInfos();
+        $this->addExtraPropsToPlayers($players);
+
         // Notify all players about the card played
         self::notifyAllPlayers( "cardPlayed", clienttranslate( '${player_name} plays ${card_name}' ), array(
             'player_id' => $player_id,
             'player_name' => self::getActivePlayerName(),
             'card_name' => $card_name,
             'card' => $card,
-            'cell_location' => $cell_location
+            'cell_location' => $cell_location,
+            'players' => $players,
             )
         );
 
@@ -621,17 +626,22 @@ class tictacmatch extends Table
             $this->addExtraCardPropertiesFromMaterial($newCard);
             $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
 
+            // Update player data
+            $this->addExtraPropsToPlayers($players);
+
             // Notify all players about the drawing card
             $totalcardsondeck = $this->cards->countCardInLocation('deck');
             self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
                 'player_name' => self::getActivePlayerName(),
-                'totalcardsondeck' => $totalcardsondeck
+                'totalcardsondeck' => $totalcardsondeck,
+                'players' => $players,
             ));
 
             // Notify player about the new card
             self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
                 'card_name' => $newCard_name,
-                'card' => $newCard
+                'card' => $newCard,
+                'players' => $players,
             ));
         }
 
@@ -656,7 +666,6 @@ class tictacmatch extends Table
             'name' => $card['class']
         ];
         $is_double_play_turn = self::getGameStateValue(self::DOUBLE_PLAY_PLAYER);
-
         $do_action = false;
 
         // Do Action
@@ -668,8 +677,6 @@ class tictacmatch extends Table
                     'even' => $this->getTeamValue(self::getGameStateValue(self::TEAM_EVEN)),
                     'odd' => $this->getTeamValue(self::getGameStateValue(self::TEAM_ODD))
                 ];
-                $action['players'] = self::loadPlayersBasicInfos();
-                $this->addTeamsToPlayers($action['players']);
 
                 break;
 
@@ -700,6 +707,9 @@ class tictacmatch extends Table
         $this->cards->insertCardOnExtremePosition($card_id, 'discardpile', true);
         $card_name = $card['value'];
 
+        $players = self::loadPlayersBasicInfos();
+        $this->addExtraPropsToPlayers($players);
+
         // Notify all players about the card played
         self::notifyAllPlayers( "actionPlayed", clienttranslate( '${player_name} plays ${card_name}' ), array(
             'player_id' => $player_id,
@@ -707,6 +717,7 @@ class tictacmatch extends Table
             'card_name' => $card_name,
             'card' => $card,
             'action' => $action,
+            'players' => $players,
         ) );
 
         if ($winner = $this->checkWinner()) {
@@ -723,18 +734,23 @@ class tictacmatch extends Table
             $this->addExtraCardPropertiesFromMaterial($newCard);
             $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
 
+            // Update player data
+            $this->addExtraPropsToPlayers($players);
+
             // Notify all players about the drawing card
             $totalcardsondeck = $this->cards->countCardInLocation('deck');
             self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw a card' ), array(
                 'player_name' => self::getActivePlayerName(),
                 'totalcardsondeck' => $totalcardsondeck,
-                'totalcardsondiscardpile' => $this->cards->countCardInLocation('discardpile')
+                'totalcardsondiscardpile' => $this->cards->countCardInLocation('discardpile'),
+                'players' => $players,
             ));
 
             // Notify player about the new card
             self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
                 'card_name' => $newCard_name,
                 'card' => $newCard,
+                'players' => $players,
             ));
         }
 
@@ -806,6 +822,9 @@ class tictacmatch extends Table
 
         // Double Play
         if ($player_id = self::getGameStateValue(self::DOUBLE_PLAY_PLAYER)) {
+            $players = self::loadPlayersBasicInfos();
+            $this->addExtraPropsToPlayers($players);
+
             $cards = self::getGameStateValue(self::DOUBLE_PLAY_CARDS);
             if ($cards == 3) {
                 self::setGameStateValue(self::DOUBLE_PLAY_CARDS, 2);
@@ -824,18 +843,24 @@ class tictacmatch extends Table
                     // Draw a new card to player
                     $newCard = $this->cards->pickCard('deck', $player_id);
                     $this->addExtraCardPropertiesFromMaterial($newCard);
+                    // Update players data
+                    $this->addExtraPropsToPlayers($players);
                     $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
                     self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
                         'card_name' => $newCard_name,
-                        'card' => $newCard
+                        'card' => $newCard,
+                        'players' => $players
                     ));
                 }
+                // Update players data
+                $this->addExtraPropsToPlayers($players);
 
                 // Notify all players about the drawing card
                 $totalcardsondeck = $this->cards->countCardInLocation('deck');
                 self::notifyAllPlayers( "drawCard", clienttranslate( '${player_name} draw 3 cards' ), array(
                     'player_name' => self::getActivePlayerName(),
-                    'totalcardsondeck' => $totalcardsondeck
+                    'totalcardsondeck' => $totalcardsondeck,
+                    'players' => $players
                 ));
             }
         }

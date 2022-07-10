@@ -57,6 +57,8 @@ function (dojo, declare, noUiSlider) {
             this.playerHand = this.gamedatas.hand;
             this.boardGrid = this.gamedatas.boardgrid;
             this.topDiscardPile = this.gamedatas.discardpiletopcard;
+            this.cardsCounters = [];
+
 
             // Setting up player boards
             for( var player_id in gamedatas.players )
@@ -71,6 +73,10 @@ function (dojo, declare, noUiSlider) {
                 dojo.place(playerPanel, 'player_board_' + player_id);
                 this.addTooltip('cards-in-hand-' + player_id, _('Total cards in hand'), '');
                 this.addTooltip('js-panel-team-card-' + player_id, _('ID Card'), '');
+
+                this.cardsCounters[player_id] = new ebg.counter();
+                this.cardsCounters[player_id].create('js-cards-in-hands-counter-' + player_id);
+                this.cardsCounters[player_id].setValue(player['nCards']);
             }
 
             // Deal cards to current player hand
@@ -121,7 +127,7 @@ function (dojo, declare, noUiSlider) {
             self.setNumberOfCardsOnBadge(self.gamedatas.totalcardsondiscardpile, 'js-discard-pile-badge');
 
             // Show player team card
-            this.flipTeamCard();
+            this.flipIDCard();
 
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
@@ -378,7 +384,7 @@ function (dojo, declare, noUiSlider) {
             return teamCardClass;
         },
 
-        flipTeamCard() {
+        flipIDCard() {
             let teamCardClass = 'hide'; // spectator
             if (!this.isSpectator) {
                 teamCardClass = this.getFlipCardClass(this.getTeamValue());
@@ -392,6 +398,13 @@ function (dojo, declare, noUiSlider) {
             }
         },
 
+        updatePlayerCardsInHand() {
+            for(let player_id in this.gamedatas.players ) {
+                const ncards = this.gamedatas.players[player_id]['nCards'];
+                this.cardsCounters[player_id].setValue(ncards);
+            }
+        },
+
         removeClassFromSelector(sel = '.card', className = 'selected') {
             dojo.query(sel).forEach((el) => {
                 dojo.removeClass(el, className);
@@ -402,6 +415,14 @@ function (dojo, declare, noUiSlider) {
             dojo.query(sel).forEach((el) => {
                 dojo.addClass(el, className);
             });
+        },
+
+        updatePlayersGamedata(players) {
+            for (let player_id in players ) {
+                const player = players[player_id];
+                this.gamedatas.players[player_id].nCards = player.nCards;
+                this.gamedatas.players[player_id].player_team = player.player_team;
+            }
         },
 
         ///////////////////////////////////////////////////
@@ -563,6 +584,9 @@ function (dojo, declare, noUiSlider) {
             const destinationSelector = `js-board-cell--${notif.args.cell_location}`;
             let cardSelector = `js-card-${card.id}`;
             const isCardAvailable = $(cardSelector);
+            const players = notif.args.players;
+            this.updatePlayersGamedata(players);
+            this.updatePlayerCardsInHand();
 
             if (!isCardAvailable) {
                 //create card on player board;
@@ -583,12 +607,15 @@ function (dojo, declare, noUiSlider) {
         {
             console.log( 'notif_actionPlayed' );
             console.log( notif );
-            const action = notif.args.action;
             const card = notif.args.card;
             const player_id = notif.args.player_id;
             const destinationSelector = 'js-discard-pile-card';
             let cardSelector = `js-card-${card.id}`;
             const isCardAvailable = $(cardSelector);
+            const action = notif.args.action;
+            const players = notif.args.players;
+            this.updatePlayersGamedata(players);
+            this.updatePlayerCardsInHand();
 
             if (!isCardAvailable) {
                 //create card on player board;
@@ -607,8 +634,7 @@ function (dojo, declare, noUiSlider) {
             switch (action.name) {
                 case 'action_flip':
                     this.gamedatas.teams = action.teams;
-                    this.gamedatas.players = action.players;
-                    this.flipTeamCard();
+                    this.flipIDCard();
                     break;
                 default:
                     break;
@@ -622,6 +648,9 @@ function (dojo, declare, noUiSlider) {
             const card = notif.args.card;
             const destinationSelector = 'js-hand__cards';
             let cardSelector = `js-card-${card.id}`;
+            const players = notif.args.players;
+            this.updatePlayersGamedata(players);
+            this.updatePlayerCardsInHand();
 
             //create card on player board;
             const cardDiv = this.getCardDiv(cardSelector, card.id, card);
@@ -639,6 +668,12 @@ function (dojo, declare, noUiSlider) {
 
         notif_drawCard: function( notif )
         {
+            console.log( 'notif_drawCard' );
+            console.log( notif );
+            const players = notif.args.players;
+            this.updatePlayersGamedata(players);
+            this.updatePlayerCardsInHand();
+
             // Update number of cards on deck
             this.setNumberOfCardsOnBadge(notif.args.totalcardsondeck, 'js-deck-badge');
             if (notif.args.totalcardsondiscardpile) {
@@ -667,6 +702,7 @@ function (dojo, declare, noUiSlider) {
                 dojo.place(backCard, from);
                 this.slide(cardId, to, { clearPos: false, duration: duration });
             }
+            this.updatePlayerCardsInHand();
         },
 
         notif_reShuffleDeck: function( notif )
@@ -681,6 +717,7 @@ function (dojo, declare, noUiSlider) {
                 this.setNumberOfCardsOnBadge(notif.args.totalcardsondiscardpile, 'js-discard-pile-badge');
                 dojo.setAttr('js-deck', 'class', 'card card--back');
             }
+            this.updatePlayerCardsInHand();
         },
 
         notif_wipedOut: function ( notif )
@@ -717,6 +754,7 @@ function (dojo, declare, noUiSlider) {
                     this.removeClassFromSelector('#js-hand__cards .card', 'card--selectable');
                 }
             });
+            this.updatePlayerCardsInHand();
         },
 
 
