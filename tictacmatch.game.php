@@ -655,6 +655,7 @@ class tictacmatch extends Table
         $action = [
             'name' => $card['class']
         ];
+        $is_double_play_turn = self::getGameStateValue(self::DOUBLE_PLAY_PLAYER);
 
         $do_action = false;
 
@@ -671,11 +672,21 @@ class tictacmatch extends Table
                 $this->addTeamsToPlayers($action['players']);
 
                 break;
+
             case 'double_play_card':
+                if ($is_double_play_turn) {
+                    throw new BgaUserException(self::_('You are not allowerd to play another Double Play card during a Double Play turn, please choose another card!'));
+                    return;
+                }
                 self::setGameStateValue(self::DOUBLE_PLAY_PLAYER, self::getActivePlayerId());
                 $do_action = 'action_2plus';
                 break;
+
             case 'wipe_out_card':
+                if ($is_double_play_turn) {
+                    throw new BgaUserException(self::_('You are not allowerd to play a Wipe Out card during a Double Play turn, please choose another card!'));
+                    return;
+                }
                 if ($this->isPlayerZombie($playerChosen)) {
                     throw new BgaUserException(self::_('The player you are trying to wipe cards is a zombie, please choose another player!'));
                     return;
