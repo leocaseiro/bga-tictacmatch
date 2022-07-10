@@ -391,7 +391,7 @@ class tictacmatch extends Table
             // Draw a new card to player
             $newCard = $this->cards->pickCard('deck', $player_id);
             $this->addExtraCardPropertiesFromMaterial($newCard);
-            $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
+            $newCard_name = $newCard['label'];
             self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
                 'card_name' => $newCard_name,
                 'card' => $newCard
@@ -595,7 +595,7 @@ class tictacmatch extends Table
         }
 
         $this->cards->insertCardOnExtremePosition($card_id, $card_location, true);
-        $card_name = $card['value'] . ' ' . $card['color'];
+        $card_name = $card['label'];
         $this->setStatsForCardPlayedOnCell($card, $playingGridCard, $player_id);
 
         $players = self::loadPlayersBasicInfos();
@@ -624,7 +624,7 @@ class tictacmatch extends Table
             // Draw a new card to player
             $newCard = $this->cards->pickCard('deck', $player_id);
             $this->addExtraCardPropertiesFromMaterial($newCard);
-            $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
+            $newCard_name = $newCard['label'];
 
             // Update player data
             $this->addExtraPropsToPlayers($players);
@@ -705,7 +705,7 @@ class tictacmatch extends Table
         $this->setStatsForActionCardPlayed($card, $player_id);
 
         $this->cards->insertCardOnExtremePosition($card_id, 'discardpile', true);
-        $card_name = $card['value'];
+        $card_name = $card['label'];
 
         $players = self::loadPlayersBasicInfos();
         $this->addExtraPropsToPlayers($players);
@@ -732,7 +732,7 @@ class tictacmatch extends Table
             // Draw a new card to player
             $newCard = $this->cards->pickCard('deck', $player_id);
             $this->addExtraCardPropertiesFromMaterial($newCard);
-            $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
+            $newCard_name = $newCard['label'];
 
             // Update player data
             $this->addExtraPropsToPlayers($players);
@@ -845,7 +845,7 @@ class tictacmatch extends Table
                     $this->addExtraCardPropertiesFromMaterial($newCard);
                     // Update players data
                     $this->addExtraPropsToPlayers($players);
-                    $newCard_name = $newCard['value'] . ' ' . $newCard['color'];
+                    $newCard_name = $newCard['label'];
                     self::notifyPlayer( $player_id, "drawSelfCard", clienttranslate( 'You draw ${card_name}' ), array(
                         'card_name' => $newCard_name,
                         'card' => $newCard,
