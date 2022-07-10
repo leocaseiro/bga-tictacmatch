@@ -54,6 +54,21 @@
 
 var jstpl_card='<div id="${DOMID}" data-type="${TYPE}" data-id="${DATAID}" class="card card--${CLASS}" data-value="${CARDVALUE}" data-color="${COLOR}"></div>';
 var jstpl_back_card='<div id="${DOMID}" class="card card--back"></div>';
+var jstpl_playerPanel = `
+<div class="panel-container" id="panel-container-\${pId}">
+  <div class="panel-team" id="panel-team-\${pId}">
+    <div></div>
+    <div id="js-panel-team-card-\${pId}" class="card-flip card--empty">
+        <div class="card card-flip__front-o card--team_o"></div>
+        <div class="card card-flip__back-x card--team_x"></div>
+    </div>
+  </div>
+
+  <div class="panel-cards" id="cards-in-hand-\${pId}">
+    <div class="card card--back"></div>
+    <span class="cards-in-hand-counter" id="js-cards-in-hands-counter-\${pId}">4</span>
+  </div>
+</div>`;
 var jstpl_configPlayerBoard = `
 <div class='player-board' id="player_board_config">
   <div id="player_config" class="player_board_content">

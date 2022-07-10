@@ -198,6 +198,42 @@
     transform: rotateY(180deg);
 }
 
+/* Player Panel */
+.panel-container,
+.panel-team,
+.panel-cards {
+    display: flex;
+    height: 35px;
+    align-items: center;
+}
+
+.panel-cards {
+    justify-content: center;
+    margin: 2px 7px;
+}
+
+.panel-container .card,
+.panel-container .card-flip {
+    border-radius: 5px;
+    height: 34.82px;
+    width: 25px;
+}
+.panel-container .card-flip {
+    margin-right: 10px;
+    margin-left: 4px;
+}
+
+.panel-cards .cards-in-hand-counter:before {
+    content: '×';
+    margin: 0 4px 0 8px;
+}
+/* .panel-container .panel-cards {
+  width: 30px;
+  background-image: url("img/sprites.png");
+  background-position: 90% 50%;
+} */
+
+
 /* Card Sprites */
 .card--blue_x {
     background-position: -0 -0;

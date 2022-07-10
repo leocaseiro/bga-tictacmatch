@@ -62,6 +62,15 @@ function (dojo, declare, noUiSlider) {
             for( var player_id in gamedatas.players )
             {
                 var player = gamedatas.players[player_id];
+                /*
+                    * Create player panel and counters
+                */
+                const playerPanel = this.format_block('jstpl_playerPanel', {
+                    pId: player_id
+                });
+                dojo.place(playerPanel, 'player_board_' + player_id);
+                this.addTooltip('cards-in-hand-' + player_id, _('Total cards in hand'), '');
+                this.addTooltip('js-panel-team-card-' + player_id, _('ID Card'), '');
             }
 
             // Deal cards to current player hand
@@ -225,8 +234,7 @@ function (dojo, declare, noUiSlider) {
         },
 
         getTeamValue: function() {
-            const playerObj = this.gamedatas.players[this.player_id];
-            return Number(playerObj.player_no) % 2 === 0 ? this.gamedatas.teams.even : this.gamedatas.teams.odd;
+            return this.gamedatas.players[this.player_id]['player_team'];
         },
 
         setNumberOfCardsOnBadge: function(n, badgeId) {
@@ -365,12 +373,23 @@ function (dojo, declare, noUiSlider) {
             return cardDiv;
         },
 
+        getFlipCardClass(team) {
+            teamCardClass = 'card-flip card-flip--flipped-' + team.toLowerCase();
+            return teamCardClass;
+        },
+
         flipTeamCard() {
             let teamCardClass = 'hide'; // spectator
             if (!this.isSpectator) {
-                teamCardClass = `card-flip card-flip--flipped-${this.getTeamValue().toLowerCase()}`;
+                teamCardClass = this.getFlipCardClass(this.getTeamValue());
             }
             dojo.setAttr('js-team-card', 'class', teamCardClass);
+
+            for(let player_id in this.gamedatas.players ) {
+                const team = this.gamedatas.players[player_id]['player_team'];
+                teamCardClass = this.getFlipCardClass(team);
+                dojo.setAttr('js-panel-team-card-' + player_id, 'class', teamCardClass);
+            }
         },
 
         removeClassFromSelector(sel = '.card', className = 'selected') {
@@ -588,6 +607,7 @@ function (dojo, declare, noUiSlider) {
             switch (action.name) {
                 case 'action_flip':
                     this.gamedatas.teams = action.teams;
+                    this.gamedatas.players = action.players;
                     this.flipTeamCard();
                     break;
                 default:

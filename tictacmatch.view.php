@@ -46,7 +46,7 @@
 
         $this->tpl['DECK'] = self::_("Deck");
         $this->tpl['DISCARD'] = self::_("Discard");
-        $this->tpl['TEAM'] = self::_("Team");
+        $this->tpl['TEAM'] = self::_("My ID Card");
         $this->tpl['MY_HAND'] = self::_("My Hand");
 
         /*********** Do not change anything below this line  ************/

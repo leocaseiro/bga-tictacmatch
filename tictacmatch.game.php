@@ -284,6 +284,8 @@ class tictacmatch extends Table
             'even' => $this->getTeamValue(self::getGameStateValue(self::TEAM_EVEN)),
             'odd' => $this->getTeamValue(self::getGameStateValue(self::TEAM_ODD))
         ];
+        // Add teams for each player on gamedatas
+        $this->addTeamsToPlayers($result['players']);
 
         // User Preferences
         $result['prefs'] = UserPreferences::getUiData($current_player_id);
@@ -312,6 +314,15 @@ class tictacmatch extends Table
 //////////////////////////////////////////////////////////////////////////////
 //////////// Utility functions
 ////////////
+
+    function addTeamsToPlayers(&$players) {
+        foreach ($players as $playerIndex => $player) {
+            $even = $this->getTeamValue(self::getGameStateValue(self::TEAM_EVEN));
+            $odd = $this->getTeamValue(self::getGameStateValue(self::TEAM_ODD));
+            $player['player_team'] = (int) $player['player_no'] % 2 == 0 ? $even : $odd;
+            $players[$playerIndex] = $player;
+        }
+    }
 
     function addExtraCardPropertiesFromMaterial(&$card) {
         if (!isset($card)) {
@@ -656,6 +667,9 @@ class tictacmatch extends Table
                     'even' => $this->getTeamValue(self::getGameStateValue(self::TEAM_EVEN)),
                     'odd' => $this->getTeamValue(self::getGameStateValue(self::TEAM_ODD))
                 ];
+                $action['players'] = self::loadPlayersBasicInfos();
+                $this->addTeamsToPlayers($action['players']);
+
                 break;
             case 'double_play_card':
                 self::setGameStateValue(self::DOUBLE_PLAY_PLAYER, self::getActivePlayerId());
