@@ -105,7 +105,8 @@ function (dojo, declare, noUiSlider) {
                 this.removeTooltip(domId);
 
                 dojo.place(cardDiv, domId, 'replace');
-                this.addTooltip(domId, card.label, _(`Click to place a ${card.value === 'X' ? "X" : "0"} card or a ${card.colorLabel} card`));
+                const symbol = card.value === 'X' ? 'X' : '0';
+                this.addTooltip(domId, card.label, _(`Click to place a ${symbol} card or a ${card.colorLabel} card`));
                 const $el = $(domId);
                 if ($el) {
                     dojo.setAttr($el, 'data-cell', i);
@@ -274,7 +275,8 @@ function (dojo, declare, noUiSlider) {
 
             this.replaceCardAttributes(card, domId);
             this.removeTooltip(domId);
-            this.addTooltip(domId, card.label, _(`Click to place a ${card.value === 'X' ? "X" : "0"} card or a ${card.colorLabel} card`));
+            const symbol = card.value === 'X' ? 'X' : '0';
+            this.addTooltip(domId, card.label, _(`Click to place a ${symbol} card or a ${card.colorLabel} card`));
         },
         replaceCardOnDiscardPile: function(card) {
             this.replaceCardAttributes(card, 'js-discard-pile-card');
