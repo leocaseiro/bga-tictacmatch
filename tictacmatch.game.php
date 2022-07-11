@@ -694,7 +694,7 @@ class tictacmatch extends Table
         $card = $this->cards->getCard($card_id);
         $this->addExtraCardPropertiesFromMaterial($card);
         $action = [
-            'name' => $card['class']
+            'name' => $card['value']
         ];
         $is_double_play_turn = self::getGameStateValue(self::DOUBLE_PLAY_PLAYER);
         $do_action = false;
@@ -792,6 +792,50 @@ class tictacmatch extends Table
         if ($do_action == 'action_wipe_out') {
             $this->wipeCards($playerChosen);
         }
+
+        $this->gamestate->nextState('nextPlayer');
+    }
+
+    function skipAction( $card_id )
+    {
+        // Check that this is the player's turn and that it is a "possible action" at this game state (see states.inc.php)
+        self::checkAction( 'skipAction' );
+
+        $is_double_play_turn = self::getGameStateValue(self::DOUBLE_PLAY_PLAYER);
+
+        if (!$is_double_play_turn) {
+            throw new BgaSystemException("You are not allowed to skip action at the moment.");
+            return;
+        }
+
+        $card = $this->cards->getCard($card_id);
+        $this->addExtraCardPropertiesFromMaterial($card);
+
+        if ($card['type'] === 'symbol') {
+            throw new BgaSystemException("You are not allowed to skip symbol cards");
+            return;
+        }
+
+        if ($card['value'] === 'flip_card') {
+            throw new BgaSystemException("You are not allowed to skip this card");
+            return;
+        }
+
+        $players = self::loadPlayersBasicInfos();
+        $this->addExtraPropsToPlayers($players);
+
+        // Discard card
+        $this->cards->insertCardOnExtremePosition($card_id, 'discardpile', true);
+
+        // Notify all players about the card discarded
+        self::notifyAllPlayers( "actionPlayed", clienttranslate( '${player_name} discards ${card_name}' ), array(
+            'player_id' => self::getActivePlayerId(),
+            'player_name' => self::getActivePlayerName(),
+            'card_name' => $card['label'],
+            'card' => $card,
+            'action' => ['name' => $card['value']],
+            'players' => $players,
+        ) );
 
         $this->gamestate->nextState('nextPlayer');
     }

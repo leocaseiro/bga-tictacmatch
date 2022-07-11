@@ -232,8 +232,8 @@ function (dojo, declare, noUiSlider) {
         * Detect if spectator or replay
         */
         isReadOnly() {
-        return this.isSpectator || typeof g_replayFrom != 'undefined' || g_archive_mode;
-      },
+            return this.isSpectator || typeof g_replayFrom != 'undefined' || g_archive_mode;
+        },
 
         randomInteger(min, max) {
             return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -277,6 +277,7 @@ function (dojo, declare, noUiSlider) {
             const symbol = card.value === 'X' ? 'X' : '0';
             this.addTooltip(domId, card.label, _(`Click to place a ${symbol} card or a ${card.colorLabel} card`));
         },
+
         replaceCardOnDiscardPile: function(card) {
             this.replaceCardAttributes(card, 'js-discard-pile-card');
         },
@@ -426,6 +427,35 @@ function (dojo, declare, noUiSlider) {
             }
         },
 
+        showSkipAction() {
+            const nCards = this.gamedatas.players[this.getCurrentPlayerId()].nCards;
+            const card = this.selectedCard;
+
+            if (nCards == 4) {
+                return false;
+            }
+
+            if (card.type === 'symbol') {
+                return false;
+            }
+
+            if (card.value === 'flip_card') {
+                return false;
+            }
+
+            this.multipleChoiceDialog(
+                _('As part of a Double Play turn, you are no allowed to use this action!'), [_('discard card')],
+                () => {
+                    this.ajaxcall( '/tictacmatch/tictacmatch/skipAction.html', {
+                        lock: true,
+                        cardId: this.selectedCard.id
+                    }, this, () => {});
+                }
+            );
+
+            return true;
+        },
+
         ///////////////////////////////////////////////////
         //// Player's action
 
@@ -463,6 +493,9 @@ function (dojo, declare, noUiSlider) {
 
             switch (this.selectedCard.value) {
                 case 'wipe_out_card':
+                    if (this.showSkipAction()) {
+                        return;
+                    }
                     const keys = Object.values(this.gamedatas.players)
                         .filter(player => player.id != this.getCurrentPlayerId())
                         .map(player => player.name);
@@ -482,6 +515,9 @@ function (dojo, declare, noUiSlider) {
                     break;
                 case 'flip_card':
                 case 'double_play_card':
+                    if (this.showSkipAction()) {
+                        break;
+                    }
                 default:
                     this.ajaxcall(
                         '/tictacmatch/tictacmatch/playAction.html',
@@ -635,7 +671,7 @@ function (dojo, declare, noUiSlider) {
             });
 
             switch (action.name) {
-                case 'action_flip':
+                case 'flip_card':
                     this.gamedatas.teams = action.teams;
                     this.flipIDCard();
                     break;

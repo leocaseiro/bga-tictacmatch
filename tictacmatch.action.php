@@ -91,4 +91,17 @@
         self::ajaxResponse( );
     }
 
+    public function skipAction()
+    {
+        self::setAjaxMode();
+
+        // Retrieve arguments
+        $cardId = self::getArg( "cardId", AT_posint, true );
+
+        // Then, call the appropriate method in your game logic, like "playCard" or "myAction"
+        $this->game->skipAction( $cardId );
+
+        self::ajaxResponse( );
+    }
+
   }
