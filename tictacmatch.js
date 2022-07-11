@@ -163,7 +163,6 @@ function (dojo, declare, noUiSlider) {
                     break;
                 case 'gameEnd':
                     this.removeClassFromSelector('.card--selectable', 'card--selectable');
-                    this.removeClassFromSelector('.card--selected', 'card--selected');
                     break;
             }
         },
@@ -563,6 +562,7 @@ function (dojo, declare, noUiSlider) {
             dojo.subscribe( 'moveCardsToDeck', this, "notif_moveCardsToDeck" );
             dojo.subscribe( 'reShuffleDeck', this, "notif_reShuffleDeck" );
             dojo.subscribe( 'wipedOut', this, "notif_wipedOut" );
+            dojo.subscribe( 'endScore', this, "notif_endScore" );
 
             // Example 2: standard notification handling + tell the user interface to wait
             //            during 3 seconds after calling the method in order to let the players
@@ -575,6 +575,7 @@ function (dojo, declare, noUiSlider) {
             this.notifqueue.setSynchronous("drawSelfCard", 500);
             this.notifqueue.setSynchronous("moveCardsToDeck", 500);
             this.notifqueue.setSynchronous("reShuffleDeck", 800);
+            this.notifqueue.setSynchronous("endScore", 1000);
         },
 
         notif_cardPlayed: function( notif )
@@ -759,7 +760,19 @@ function (dojo, declare, noUiSlider) {
             this.updatePlayerCardsInHand();
         },
 
+        notif_endScore: function ( notif )
+        {
+            console.log( 'notif_endScore' );
+            console.log( notif );
 
+            setTimeout(() => {
+                const winner_matches = notif.args.winner_matches;
+
+                for (let cell of winner_matches) {
+                    this.addClassFromSelector('#js-board-cell--' + cell, 'card--selected');
+                }
+            }, 2000);
+        },
 
        /***********************************
        ************* Settings ************

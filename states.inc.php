@@ -78,8 +78,18 @@ $machinestates = array(
         "type" => "game",
         "action" => "stNextPlayer",
         "updateGameProgression" => false,
-        "transitions" => array( "endGame" => 99, "playerTurn" => 2 )
+        "transitions" => array( "endScore" => 4, "playerTurn" => 2 )
     ),
+
+    4 => [
+        "name" => "endScore",
+        "description" => "",
+        "type" => "game",
+        "action" => "stEndScore",
+        "transitions" => [
+            "endGame" => 99,
+        ],
+    ],
 
 /*
     Examples:

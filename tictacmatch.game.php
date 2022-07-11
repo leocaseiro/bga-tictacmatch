@@ -40,10 +40,29 @@ class tictacmatch extends Table
     const TEAM_O_STRING = 'O';
 
     const HAS_WINNER = 'has_winner';
+    const WINNER_MATCHES = 'winner_matches';
 
     const WIPE_CARDS_FROM = 'wipe_cards_from';
     const DOUBLE_PLAY_PLAYER = 'double_play_player';
     const DOUBLE_PLAY_CARDS = 'double_play_cards';
+
+    // 0, 1, 2,
+    // 3, 4, 5,
+    // 6, 7, 8,
+    const MATCHES = [
+        // horizontally
+        1 => [0, 1, 2],
+        2 => [3, 4, 5],
+        3 => [6, 7, 8],
+        // vertically
+        4 => [0, 3, 6],
+        5 => [1, 4, 7],
+        6 => [2, 5, 8],
+        // diagonally
+        7 => [0, 4, 8],
+        // anti-diagonally
+        8 => [2, 4, 6],
+    ];
 
     public static $instance = null;
 
@@ -66,6 +85,7 @@ class tictacmatch extends Table
             self::WIPE_CARDS_FROM => 14,
             self::DOUBLE_PLAY_PLAYER => 15,
             self::DOUBLE_PLAY_CARDS => 16,
+            self::WINNER_MATCHES => 17,
         ) );
         $this->cards = self::getNew( "module.common.deck" );
         $this->cards->init( "card" );
@@ -402,26 +422,10 @@ class tictacmatch extends Table
     }
 
     function checkWinner() {
-        // 0, 1, 2,
-        // 3, 4, 5,
-        // 6, 7, 8,
-        $matches = [
-            // horizontally
-            [0, 1, 2],
-            [3, 4, 5],
-            [6, 7, 8],
-            // vertically
-            [0, 3, 6],
-            [1, 4, 7],
-            [2, 5, 8],
-            // diagonally
-            [0, 4, 8],
-            // anti-diagonally
-            [2, 4, 6],
-        ];
+        $matches = self::MATCHES;
 
         $boardgrid = [];
-        foreach ($matches as $row) {
+        foreach ($matches as $winner_matches => $row) {
             foreach ($row as $index) {
                 if (!isset($boardgrid[$index]) || !is_null($boardgrid[$index])) {
                     $card = $this->cards->getCardOnTop('cell-' . $index);
@@ -436,6 +440,7 @@ class tictacmatch extends Table
                 if ($boardgrid[$row[0]]['type_arg'] == $boardgrid[$row[1]]['type_arg'] && $boardgrid[$row[1]]['type_arg'] == $boardgrid[$row[2]]['type_arg']) {
                     $card = $boardgrid[$row[0]];
                     $this->addExtraCardPropertiesFromMaterial($card);
+                    self::setGameStateValue(self::WINNER_MATCHES, $winner_matches);
                     return $card['value'];
                 }
             }
@@ -452,15 +457,19 @@ class tictacmatch extends Table
         }
     }
 
-    function setWinners($winner) {
+    function getWinners($winner) {
         $players = self::loadPlayersBasicInfos();
         $winner_value = $winner == self::TEAM_X_STRING ? self::TEAM_X : self::TEAM_O;
         $winners_no = self::getGameStateValue(self::TEAM_EVEN) == $winner_value ? [0, 2] : [1, 3];
+        $winners = array();
         foreach ($players as $player) {
             if (in_array($player['player_no'], $winners_no)) {
                 $this->setWinnerScore($player['player_id']);
+                array_push($winners, $player);
             }
         }
+
+        return $winners;
     }
 
     function moveCardsToDeck($from_location, $from_js_id, $cell = false) {
@@ -553,6 +562,29 @@ class tictacmatch extends Table
         return ($players[$player_id]['player_zombie'] == 1);
     }
 
+    function notifyScores()
+    {
+        $symbol_winner = $this->checkWinner();
+        $winners = $this->getWinners($symbol_winner);
+        $winner_matches = self::getGameStateValue(self::WINNER_MATCHES);
+        $message = NULL;
+
+        $props = array(
+            'player_name' => $winners[0]['player_name'],
+            'symbol'=> $symbol_winner == 'X' ? 'X' : '0',
+            'winner_matches' => self::MATCHES[$winner_matches]
+        );
+
+        if (count($winners) == 2) {
+            $message = clienttranslate('Players ${player_name} and ${player_name2} are the winners with ${symbol}!');
+            $props['player_name2'] = $winners[1]['player_name'];
+        } else {
+            $message = clienttranslate('Player ${player_name} is the winner with ${symbol}!');
+        }
+
+        self::notifyAllPlayers( "endScore", $message, $props);
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
 ////////////
@@ -612,8 +644,7 @@ class tictacmatch extends Table
             )
         );
 
-        if ($winner = $this->checkWinner()) {
-            $this->setWinners($winner);
+        if ($this->checkWinner()) {
             self::setGameStateValue(self::HAS_WINNER, true);
             $this->gamestate->nextState('nextPlayer');
             return;
@@ -720,8 +751,7 @@ class tictacmatch extends Table
             'players' => $players,
         ) );
 
-        if ($winner = $this->checkWinner()) {
-            $this->setWinners($winner);
+        if ($this->checkWinner()) {
             self::setGameStateValue(self::HAS_WINNER, true);
             $this->gamestate->nextState('nextPlayer');
             return;
@@ -807,8 +837,8 @@ class tictacmatch extends Table
     {
         // End of the game!
         if (self::getGameStateValue(self::HAS_WINNER)) {
-            // TODO notification for the winner for both players on 4p
-            $this->gamestate->nextState('endGame');
+            $this->notifyScores();
+            $this->gamestate->nextState('endScore');
             return;
         }
 
@@ -868,6 +898,11 @@ class tictacmatch extends Table
         $player_id = $this->activeNextPlayer();
         self::giveExtraTime($player_id);
         $this->gamestate->nextState('playerTurn');
+    }
+
+    function stEndScore()
+    {
+            $this->gamestate->nextState('endGame');
     }
 
 //////////////////////////////////////////////////////////////////////////////
