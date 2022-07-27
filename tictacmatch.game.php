@@ -416,6 +416,11 @@ class tictacmatch extends Table
                 'card_name' => $newCard_name,
                 'card' => $newCard
             ));
+
+            $totalcardsondeck = $this->cards->countCardInLocation('deck');
+            if ($totalcardsondeck == 0) {
+                $this->reShuffleDeck();
+            }
         }
 
         self::incStat(1, 'wiped_out_cards_player', $player_id);
@@ -925,6 +930,11 @@ class tictacmatch extends Table
                         'card' => $newCard,
                         'players' => $players
                     ));
+
+                    $totalcardsondeck = $this->cards->countCardInLocation('deck');
+                    if ($totalcardsondeck == 0) {
+                        $this->reShuffleDeck();
+                    }
                 }
                 // Update players data
                 $this->addExtraPropsToPlayers($players);
