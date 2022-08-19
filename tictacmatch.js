@@ -58,6 +58,8 @@ function (dojo, declare, noUiSlider) {
             this.boardGrid = this.gamedatas.boardgrid;
             this.topDiscardPile = this.gamedatas.discardpiletopcard;
             this.cardsCounters = [];
+            this.players = this.gamedatas.players;
+            this.teams = this.gamedatas.teams;
 
 
             // Setting up player boards
@@ -240,7 +242,7 @@ function (dojo, declare, noUiSlider) {
         },
 
         getTeamValue: function() {
-            return this.gamedatas.players[this.player_id]['player_team'];
+            return this.players[this.player_id]['player_team'];
         },
 
         setNumberOfCardsOnBadge: function(n, badgeId) {
@@ -393,16 +395,16 @@ function (dojo, declare, noUiSlider) {
             }
             dojo.setAttr('js-team-card', 'class', teamCardClass);
 
-            for(let player_id in this.gamedatas.players ) {
-                const team = this.gamedatas.players[player_id]['player_team'];
+            for(let player_id in this.players ) {
+                const team = this.players[player_id]['player_team'];
                 teamCardClass = this.getFlipCardClass(team);
                 dojo.setAttr('js-panel-team-card-' + player_id, 'class', teamCardClass);
             }
         },
 
         updatePlayerCardsInHand() {
-            for(let player_id in this.gamedatas.players ) {
-                const ncards = this.gamedatas.players[player_id]['nCards'];
+            for(let player_id in this.players ) {
+                const ncards = this.players[player_id]['nCards'];
                 this.cardsCounters[player_id].setValue(ncards);
             }
         },
@@ -422,13 +424,13 @@ function (dojo, declare, noUiSlider) {
         updatePlayersGamedata(players) {
             for (let player_id in players ) {
                 const player = players[player_id];
-                this.gamedatas.players[player_id].nCards = player.nCards;
-                this.gamedatas.players[player_id].player_team = player.player_team;
+                this.players[player_id].nCards = player.nCards;
+                this.players[player_id].player_team = player.player_team;
             }
         },
 
         showSkipAction() {
-            const nCards = this.gamedatas.players[this.getCurrentPlayerId()].nCards;
+            const nCards = this.players[this.getCurrentPlayerId()].nCards;
             const card = this.selectedCard;
 
             if (nCards == 4) {
@@ -496,14 +498,14 @@ function (dojo, declare, noUiSlider) {
                     if (this.showSkipAction()) {
                         return;
                     }
-                    const keys = Object.values(this.gamedatas.players)
+                    const keys = Object.values(this.players)
                         .filter(player => player.id != this.getCurrentPlayerId())
                         .map(player => player.name);
                     this.multipleChoiceDialog(
                         _('Choose a player to wipe cards out:'), keys,
                         (choice) => {
                             const playerChosenName = keys[choice];
-                            const playerChosen = Object.values(this.gamedatas.players)
+                            const playerChosen = Object.values(this.players)
                                 .find(player => player.name == playerChosenName);
                             this.ajaxcall( '/tictacmatch/tictacmatch/playAction.html', {
                                 lock: true,
@@ -672,7 +674,7 @@ function (dojo, declare, noUiSlider) {
 
             switch (action.name) {
                 case 'flip_card':
-                    this.gamedatas.teams = action.teams;
+                    this.teams = action.teams;
                     this.flipIDCard();
                     break;
                 default:
