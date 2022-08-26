@@ -28,13 +28,26 @@ $game_options = array(
     100 => array(
         'name' => totranslate( 'Teams' ),
         'values' => array(
-                1 => array( 'name' => totranslate( 'By table order (1rst/3rd versus 2nd/4th)' )),
-                2 => array( 'name' => totranslate( 'By table order (1rst/2nd versus 3rd/4th)' )),
-                3 => array( 'name' => totranslate( 'By table order (1rst/4th versus 2nd/3rd)' )),
-                4 => array( 'name' => totranslate( 'At random' ) ),
+            1 => array( 'name' => totranslate( 'By table order (1rst/3rd versus 2nd/4th)' )),
+            2 => array( 'name' => totranslate( 'By table order (1rst/2nd versus 3rd/4th)' )),
+            3 => array( 'name' => totranslate( 'By table order (1rst/4th versus 2nd/3rd)' )),
+            4 => array( 'name' => totranslate( 'At random' ) ),
+        ),
+        'default' => 4
+    ),
+    101 => array(
+        'name' => totranslate( 'Matches' ),
+        'values' => array(
+            1 => array( 'name' => totranslate( 'Single Match' )),
+            2 => array( 'name' => totranslate( 'First to win 2 matches' )),
+            3 => array( 'name' => totranslate( 'First to win 3 matches' )),
+            4 => array( 'name' => totranslate( 'First to win 4 matches' )),
+            5 => array( 'name' => totranslate( 'First to win 5 matches' ) ),
         ),
         'default' => 4
     ),
 );
 
-$game_preferences = array();
+$game_preferences = array(
+
+);

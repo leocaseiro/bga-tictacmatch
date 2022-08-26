@@ -41,6 +41,8 @@ class tictacmatch extends Table
 
     const HAS_WINNER = 'has_winner';
     const WINNER_MATCHES = 'winner_matches';
+    const MATCHES_TO_WIN = 'matches_to_win';
+    const END_OF_GAME = 'end_of_game';
 
     const WIPE_CARDS_FROM = 'wipe_cards_from';
     const DOUBLE_PLAY_PLAYER = 'double_play_player';
@@ -86,6 +88,8 @@ class tictacmatch extends Table
             self::DOUBLE_PLAY_PLAYER => 15,
             self::DOUBLE_PLAY_CARDS => 16,
             self::WINNER_MATCHES => 17,
+            self::MATCHES_TO_WIN => 101,
+            self::END_OF_GAME => 150,
         ) );
         $this->cards = self::getNew( "module.common.deck" );
         $this->cards->init( "card" );
@@ -181,8 +185,7 @@ class tictacmatch extends Table
 
         // Init game statistics
         // (note: statistics used in this file must be defined in your stats.inc.php file)
-        self::initStat( 'table', 'turns_number', 0 );
-        self::initStat( 'player', 'turns_number', 0 );
+        self::initStat( 'table', 'matches_played', 0 );
         self::initStat( 'table', 'cards_played', 0 );
         self::initStat( 'player', 'cards_played', 0 );
         self::initStat( 'table', 'symbol_cards_on_empty_space', 0 );
@@ -213,44 +216,14 @@ class tictacmatch extends Table
         self::initStat( 'player', 'wiped_out_cards_player', 0 );
 
         // setup the initial game situation here
-        self::setGameStateInitialValue( self::HAS_WINNER, false );
+        self::setGameStateInitialValue( self::HAS_WINNER, 0 );
         self::setGameStateInitialValue( self::DOUBLE_PLAY_PLAYER, 0 );
         self::setGameStateInitialValue( self::DOUBLE_PLAY_CARDS, 3 );
-
+        self::setGameStateInitialValue( self::END_OF_GAME, 0 );
         // Create cards
         $this->cards->createCards($this->ttm_cards, 'deck');
 
-        // Shuffle deck
-		$this->cards->shuffle('deck');
-
-        // Deal 4 cards to each players
-		$players = self::loadPlayersBasicInfos();
-		foreach ($players as $playerId => $player) {
-			$this->cards->pickCards(4, 'deck', $playerId);
-		}
-
-        // Setup grid with card on middle
-        $initialCard = null;
-        while ($initialCard == null) {
-            $drewedCard = $this->cards->pickCardForLocation('deck', 'cell-4');
-            if ($drewedCard['type'] === 'symbol') {
-                $initialCard = $drewedCard;
-            } else {
-                // if action card, discard to draw another one.
-                $this->cards->insertCardOnExtremePosition( $drewedCard['id'], 'discardpile', true);
-            }
-		}
-
-        // Set symbol for players (first player has opposite side as the table on first draw)
-        $this->addExtraCardPropertiesFromMaterial($initialCard);
-        $this->addExtraCardPropertiesFromMaterial($initialCard);
-        if ($initialCard['value'] === self::TEAM_X_STRING) {
-            self::setGameStateInitialValue( self::TEAM_EVEN, self::TEAM_O );
-            self::setGameStateInitialValue( self::TEAM_ODD, self::TEAM_X );
-        } else {
-            self::setGameStateInitialValue( self::TEAM_EVEN, self::TEAM_X );
-            self::setGameStateInitialValue( self::TEAM_ODD, self::TEAM_O );
-        }
+        $this->setupMatch(true);
 
         // User Preferences (from tisaac boilerplate)
         UserPreferences::setupNewGame($players, $options);
@@ -309,6 +282,9 @@ class tictacmatch extends Table
 
         // User Preferences
         $result['prefs'] = UserPreferences::getUiData($current_player_id);
+
+        // Matches to win
+        $result['matches_to_win'] = self::getGameStateValue(self::MATCHES_TO_WIN);
 
         return $result;
     }
@@ -457,22 +433,31 @@ class tictacmatch extends Table
 
     function setWinnerScore($playerId) {
         if ($playerId) {
-            $sql = "UPDATE player SET player_score = 1 WHERE player_id = '$playerId'";
+            $sql = "UPDATE player SET player_score = player_score + 1 WHERE player_id = '$playerId'";
             self::DbQuery($sql);
+
+            $sql = "SELECT player_score FROM player WHERE player_id = '$playerId'";
+            return $this->getUniqueValueFromDB($sql);
         }
     }
 
     function getWinners($winner) {
+        $score = NULL;
         $players = self::loadPlayersBasicInfos();
         $winner_value = $winner == self::TEAM_X_STRING ? self::TEAM_X : self::TEAM_O;
         $winners_no = self::getGameStateValue(self::TEAM_EVEN) == $winner_value ? [0, 2] : [1, 3];
         $winners = array();
         foreach ($players as $player) {
             if (in_array($player['player_no'], $winners_no)) {
-                $this->setWinnerScore($player['player_id']);
+                $score = $this->setWinnerScore($player['player_id']);
                 array_push($winners, $player);
             }
         }
+
+        if ($score == self::getGameStateValue(self::MATCHES_TO_WIN)) {
+            self::setGameStateValue(self::END_OF_GAME, 1);
+        }
+        self::incStat(1, 'matches_played');
 
         return $winners;
     }
@@ -500,7 +485,7 @@ class tictacmatch extends Table
         }
     }
 
-    function reShuffleDeck() {
+    function reShuffleDeck($is_new_game = false) {
         // grab cards for each cell, except from the top card
         for ($i = 0; $i < 9; $i++) {
             $cell = 'cell-' . $i;
@@ -580,14 +565,119 @@ class tictacmatch extends Table
             'winner_matches' => self::MATCHES[$winner_matches]
         );
 
+        $end_of_game = self::getGameStateValue(self::END_OF_GAME);
         if (count($winners) == 2) {
-            $message = clienttranslate('Players ${player_name} and ${player_name2} are the winners with ${symbol}!');
+            if ($end_of_game) {
+                $message = clienttranslate('Players ${player_name} and ${player_name2} are the winners of the game with ${symbol}!');
+            } else {
+                $message = clienttranslate('Players ${player_name} and ${player_name2} are the winners of this match with ${symbol}!');
+            }
             $props['player_name2'] = $winners[1]['player_name'];
         } else {
-            $message = clienttranslate('Player ${player_name} is the winner with ${symbol}!');
+            if ($end_of_game) {
+                $message = clienttranslate('Player ${player_name} is the winner of the game with ${symbol}!');
+            } else {
+                $message = clienttranslate('Player ${player_name} is the winner of this match with ${symbol}!');
+            }
         }
 
-        self::notifyAllPlayers( "endScore", $message, $props);
+        $sql = "SELECT player_id id, player_score score, player_no FROM player ";
+        $props['players'] = self::getCollectionFromDb( $sql );
+
+        if ($end_of_game) {
+            self::notifyAllPlayers( "endScore", $message, $props);
+        } else {
+            self::notifyAllPlayers( "matchScore", $message, $props);
+        }
+    }
+
+    function setupMatch($is_new_game = false)
+    {
+        $totalCardsOnPreviousDiscardPile = $this->cards->countCardInLocation('discardpile');
+
+        $this->cards->moveAllCardsInLocation(NULL, 'deck');
+
+        // Shuffle deck
+		$this->cards->shuffle('deck');
+        $cards = [];
+
+        // Deal 4 cards to each players
+		$players = self::loadPlayersBasicInfos();
+		foreach ($players as $playerId => $player) {
+			$cards[$playerId] = $this->cards->pickCards(4, 'deck', $playerId);
+            $this->populateCardProperties($cards[$playerId]);
+		}
+
+        // Setup grid with card on middle
+        $initialCard = null;
+        while ($initialCard == null) {
+            $drewedCard = $this->cards->pickCardForLocation('deck', 'cell-4');
+            if ($drewedCard['type'] === 'symbol') {
+                $initialCard = $drewedCard;
+            } else {
+                // if action card, discard to draw another one.
+                $this->cards->insertCardOnExtremePosition( $drewedCard['id'], 'discardpile', true);
+            }
+		}
+
+        $this->addExtraCardPropertiesFromMaterial($initialCard);
+
+        if ($is_new_game) {
+            if ($initialCard['value'] === self::TEAM_X_STRING) {
+                self::setGameStateInitialValue( self::TEAM_EVEN, self::TEAM_O );
+                self::setGameStateInitialValue( self::TEAM_ODD, self::TEAM_X );
+            } else {
+                self::setGameStateInitialValue( self::TEAM_EVEN, self::TEAM_X );
+                self::setGameStateInitialValue( self::TEAM_ODD, self::TEAM_O );
+            }
+        } else {
+            // reset all current actions
+            self::setGameStateValue( self::HAS_WINNER, 0 );
+            self::setGameStateValue( self::DOUBLE_PLAY_PLAYER, 0 );
+            self::setGameStateValue( self::DOUBLE_PLAY_CARDS, 3 );
+            self::setGameStateValue( self::END_OF_GAME, 0 );
+
+            // player should be opposite team as card
+            $nextPlayer_player_id = $this->activeNextPlayer();
+            $players = self::loadPlayersBasicInfos();
+            $this->addExtraPropsToPlayers($players);
+            $is_player_even = (int) $players[$nextPlayer_player_id]['player_no'] % 2 == 0;
+            if ($is_player_even) {
+                self::setGameStateValue( $is_player_even ? self::TEAM_EVEN : self::TEAM_ODD, self::TEAM_O );
+                self::setGameStateValue( $is_player_even ? self::TEAM_ODD : self::TEAM_EVEN, self::TEAM_X );
+            }
+            if ($initialCard['value'] === self::TEAM_X_STRING) {
+                self::setGameStateValue( $is_player_even ? self::TEAM_EVEN : self::TEAM_ODD, self::TEAM_O );
+                self::setGameStateValue( $is_player_even ? self::TEAM_ODD : self::TEAM_EVEN, self::TEAM_X );
+            } else {
+                self::setGameStateValue( $is_player_even ? self::TEAM_EVEN : self::TEAM_ODD, self::TEAM_X );
+                self::setGameStateValue( $is_player_even ? self::TEAM_ODD : self::TEAM_EVEN, self::TEAM_O );
+            }
+
+            $discardCard = $this->cards->getCardOnTop('discardpile');
+            $this->addExtraCardPropertiesFromMaterial($discardCard);
+            // Notify all players about the new match
+            self::notifyAllPlayers( "newMatch", clienttranslate( 'New match started' ), array(
+                'initialCard' => $initialCard,
+                'totalCardsOnPreviousDiscardPile' => $totalCardsOnPreviousDiscardPile,
+                'totalcardsondiscardpile' => $this->cards->countCardInLocation('discardpile'),
+                'totalcardsondeck' => $this->cards->countCardInLocation('deck'),
+                'discardCard' => $discardCard,
+            ));
+
+            // update players teams
+            $this->addExtraPropsToPlayers($players);
+
+            foreach ($players as $playerId => $player) {
+                // Notify player about the new card
+                self::notifyPlayer( $playerId, "drawSelfCards", clienttranslate( 'You draw 4 new cards' ), array(
+                    'cards' => $cards[$playerId],
+                    'players' => $players
+                ));
+            }
+
+            return $nextPlayer_player_id;
+        }
     }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -650,7 +740,7 @@ class tictacmatch extends Table
         );
 
         if ($this->checkWinner()) {
-            self::setGameStateValue(self::HAS_WINNER, true);
+            self::setGameStateValue(self::HAS_WINNER, 1);
             $this->gamestate->nextState('nextPlayer');
             return;
         }
@@ -757,7 +847,7 @@ class tictacmatch extends Table
         ) );
 
         if ($this->checkWinner()) {
-            self::setGameStateValue(self::HAS_WINNER, true);
+            self::setGameStateValue(self::HAS_WINNER, 1);
             $this->gamestate->nextState('nextPlayer');
             return;
         }
@@ -887,7 +977,16 @@ class tictacmatch extends Table
         // End of the game!
         if (self::getGameStateValue(self::HAS_WINNER)) {
             $this->notifyScores();
-            $this->gamestate->nextState('endScore');
+            if (self::getGameStateValue(self::END_OF_GAME)) {
+                $this->gamestate->nextState('endScore');
+            } else {
+                self::setGameStateValue(self::HAS_WINNER, 0);
+                $player_id = self::setupMatch();
+
+                $this->gamestate->changeActivePlayer( $player_id );
+                self::giveExtraTime($player_id);
+                $this->gamestate->nextState('playerTurn');
+            }
             return;
         }
 

@@ -48,11 +48,6 @@
 */
 
 $common_stats = array(
-    "turns_number" => array(
-        "id"=> 10,
-        "name" => clienttranslate("Number of turns"),
-        "type" => "int"
-    ),
     "cards_played" => array(
         "id"=> 11,
         "name" => clienttranslate("Number of cards played"),
@@ -123,6 +118,11 @@ $common_stats = array(
 $stats_type = array(
     // Statistics global to table
     "table" => $common_stats + array(
+        "matches_played" => array(
+            "id"=> 30,
+            "name" => clienttranslate("Number of matches played"),
+            "type" => "int"
+        ),
         "reshuffle_draw_pile" => array(
             "id"=> 24,
             "name" => clienttranslate("Number of times that draw pile was reshuffled"),

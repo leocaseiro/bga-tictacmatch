@@ -135,6 +135,24 @@
     box-shadow: 0 0 5px 1px var(--tictacmatchPurple);
 }
 
+.card--glow {
+    animation: glow 1s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    0% {
+        box-shadow: 0 0 .5em -.5em var(--tictacmatchYellow);
+    }
+
+    50% {
+        box-shadow: 0 0 .5em .5em var(--tictacmatchYellow);
+    }
+
+    to {
+        box-shadow: 0 0 0 0 var(--tictacmatchYellow);
+    }
+}
+
 .card-badge {
     position: absolute;
     color: white;
@@ -201,7 +219,8 @@
 /* Player Panel */
 .panel-container,
 .panel-team,
-.panel-cards {
+.panel-cards,
+.panel-matches {
     display: flex;
     height: 35px;
     align-items: center;
@@ -210,6 +229,14 @@
 .panel-cards {
     justify-content: center;
     margin: 2px 7px;
+}
+
+.panel-matches {
+    margin-left: .75em
+}
+
+.panel-matches > * {
+    margin-left: 3px;
 }
 
 .panel-container .card,

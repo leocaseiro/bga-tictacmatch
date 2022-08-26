@@ -68,6 +68,13 @@ var jstpl_playerPanel = `
     <div class="card card--back"></div>
     <span class="cards-in-hand-counter" id="js-cards-in-hands-counter-\${pId}">0</span>
   </div>
+
+  <div class="panel-matches" id="matches-player-\${pId}">
+    <i class="fa fa-trophy" aria-hidden="true"></i>
+    <span id="js-player-score-\${pId}">0</span>
+    <span>/</span>
+    <span>\${matches}</span>
+  </div>
 </div>`;
 var jstpl_configPlayerBoard = `
 <div class='player-board' id="player_board_config">

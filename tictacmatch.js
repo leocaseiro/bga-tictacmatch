@@ -58,6 +58,7 @@ function (dojo, declare, noUiSlider) {
             this.boardGrid = this.gamedatas.boardgrid;
             this.topDiscardPile = this.gamedatas.discardpiletopcard;
             this.cardsCounters = [];
+            this.playerScoreCounters = [];
             this.players = this.gamedatas.players;
             this.teams = this.gamedatas.teams;
 
@@ -69,16 +70,24 @@ function (dojo, declare, noUiSlider) {
                 /*
                     * Create player panel and counters
                 */
+                const matches_to_win = this.gamedatas.matches_to_win;
                 const playerPanel = this.format_block('jstpl_playerPanel', {
-                    pId: player_id
+                    pId: player_id,
+                    matches: matches_to_win
                 });
                 dojo.place(playerPanel, 'player_board_' + player_id);
                 this.addTooltip('cards-in-hand-' + player_id, _('Total cards in hand'), '');
                 this.addTooltip('js-panel-team-card-' + player_id, _('ID Card'), '');
+                this.addTooltip('matches-player-' + player_id, _('Score matches'), _(`First to win ${matches_to_win} matches`));
 
                 this.cardsCounters[player_id] = new ebg.counter();
                 this.cardsCounters[player_id].create('js-cards-in-hands-counter-' + player_id);
                 this.cardsCounters[player_id].setValue(player['nCards']);
+
+                this.playerScoreCounters[player_id] = new ebg.counter();
+                this.playerScoreCounters[player_id].create('player_score_' + player_id);
+                this.playerScoreCounters[player_id].create('js-player-score-' + player_id);
+                this.playerScoreCounters[player_id].setValue(player.score);
             }
 
             // Deal cards to current player hand
@@ -158,7 +167,16 @@ function (dojo, declare, noUiSlider) {
                     this.removeClassFromSelector('.card--selectable', 'card--selectable');
 
                     if (this.isCurrentPlayerActive()) {
-                        this.addClassFromSelector('#js-hand__cards .card', 'card--selectable');
+                        const self = this;
+
+                        self.addClassFromSelector('#js-hand__cards .card', 'card--selectable');
+                        setTimeout(() => {
+                            self.addClassFromSelector('#js-hand__cards .card', 'card--selectable');
+                        }, 500); // make sure it works
+
+                        setTimeout(() => {
+                            self.addClassFromSelector('#js-hand__cards .card', 'card--selectable');
+                        }, 1000); // make sure it works once again
                     } else {
                         this.removeClassFromSelector('#js-hand__cards .card', 'card--selectable');
                     }
@@ -237,7 +255,7 @@ function (dojo, declare, noUiSlider) {
             return this.isSpectator || typeof g_replayFrom != 'undefined' || g_archive_mode;
         },
 
-        randomInteger(min, max) {
+        randomInteger(min = 500, max = 1200) {
             return Math.floor(Math.random() * (max - min + 1)) + min;
         },
 
@@ -270,6 +288,15 @@ function (dojo, declare, noUiSlider) {
             dojo.setAttr(el, 'data-value', card.value);
         },
 
+        clearCardAttributes: function(domId) {
+            const el = $(domId);
+
+            dojo.setAttr(el, 'class', `card card--empty`);
+            dojo.removeAttr(el, 'data-color');
+            dojo.removeAttr(el, 'data-id');
+            dojo.removeAttr(el, 'data-value');
+        },
+
         replaceCardOnCell: function(cellLocation, card) {
             const domId = `js-board-cell--${cellLocation}`;
             const el = $(domId);
@@ -282,6 +309,7 @@ function (dojo, declare, noUiSlider) {
 
         replaceCardOnDiscardPile: function(card) {
             this.replaceCardAttributes(card, 'js-discard-pile-card');
+            this.topDiscardPile = card;
         },
 
         // used on Tisaac slide
@@ -405,7 +433,7 @@ function (dojo, declare, noUiSlider) {
         updatePlayerCardsInHand() {
             for(let player_id in this.players ) {
                 const ncards = this.players[player_id]['nCards'];
-                this.cardsCounters[player_id].setValue(ncards);
+                this.cardsCounters[player_id].toValue(ncards);
             }
         },
 
@@ -456,6 +484,40 @@ function (dojo, declare, noUiSlider) {
             );
 
             return true;
+        },
+
+        moveMultipleCards: function (from, to, totalOfCards) {
+            for(let i = 0; i <= totalOfCards; i++) {
+                const cardId = `js-from--${from}--to--${to}--${i}`;
+                const duration = this.randomInteger();
+                const backCard = this.format_block('jstpl_back_card', { DOMID: cardId });
+                dojo.place(backCard, from);
+                this.slide(cardId, to, { clearPos: false, destroy: true, duration: duration });
+            }
+        },
+
+        addCardToPlayerHand: function (card, players, duration = false) {
+            const destinationSelector = 'js-hand__cards';
+            let cardSelector = `js-card-${card.id}`;
+            this.updatePlayersGamedata(players);
+            this.updatePlayerCardsInHand();
+
+            //create card on player board;
+            const cardDiv = this.getCardDiv(cardSelector, card.id, card);
+            dojo.place(cardDiv, 'js-deck');
+
+            if (duration) {
+                this.slide(cardSelector, destinationSelector, { duration: duration });
+            } else {
+                this.slide(cardSelector, destinationSelector);
+            }
+            this.addTooltip(cardSelector, card.label, _('Click to select card'));
+            dojo.connect($(cardSelector), 'onclick', this, this.onHandCardClick);
+            if (this.isCurrentPlayerActive()) {
+                this.addClassFromSelector('#js-hand__cards .card', 'card--selectable');
+            } else {
+                this.removeClassFromSelector('#js-hand__cards .card', 'card--selectable');
+            }
         },
 
         ///////////////////////////////////////////////////
@@ -590,30 +652,28 @@ function (dojo, declare, noUiSlider) {
         {
             console.log( 'notifications subscriptions setup' );
 
-            // TODO: here, associate your game notifications with local methods
-
             // Example 1: standard notification handling
             dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
             dojo.subscribe( 'actionPlayed', this, "notif_actionPlayed" );
             dojo.subscribe( 'drawCard', this, "notif_drawCard" );
             dojo.subscribe( 'drawSelfCard', this, "notif_drawSelfCard" );
+            dojo.subscribe( 'drawSelfCards', this, "notif_drawSelfCards" );
             dojo.subscribe( 'moveCardsToDeck', this, "notif_moveCardsToDeck" );
             dojo.subscribe( 'reShuffleDeck', this, "notif_reShuffleDeck" );
             dojo.subscribe( 'wipedOut', this, "notif_wipedOut" );
+            dojo.subscribe( 'newMatch', this, "notif_newMatch" );
             dojo.subscribe( 'endScore', this, "notif_endScore" );
+            dojo.subscribe( 'matchScore', this, "notif_endScore" );
 
-            // Example 2: standard notification handling + tell the user interface to wait
-            //            during 3 seconds after calling the method in order to let the players
-            //            see what is happening in the game.
-            // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
-            // this.notifqueue.setSynchronous( 'cardPlayed', 3000 );
-            //
             this.notifqueue.setSynchronous("wipedOut", 500);
             this.notifqueue.setSynchronous("drawCard", 800);
             this.notifqueue.setSynchronous("drawSelfCard", 500);
+            this.notifqueue.setSynchronous("drawSelfCards", 500);
             this.notifqueue.setSynchronous("moveCardsToDeck", 500);
             this.notifqueue.setSynchronous("reShuffleDeck", 800);
-            this.notifqueue.setSynchronous("endScore", 1000);
+            this.notifqueue.setSynchronous("matchScore", 3000);
+            this.notifqueue.setSynchronous("newMatch", 2000);
+            this.notifqueue.setSynchronous("endScore", 5000);
         },
 
         notif_cardPlayed: function( notif )
@@ -687,24 +747,25 @@ function (dojo, declare, noUiSlider) {
             console.log( 'notif_drawSelfCard' );
             console.log( notif );
             const card = notif.args.card;
-            const destinationSelector = 'js-hand__cards';
-            let cardSelector = `js-card-${card.id}`;
             const players = notif.args.players;
+            this.addCardToPlayerHand(card, players);
+        },
+
+        notif_drawSelfCards: function( notif )
+        {
+            console.log( 'notif_drawSelfCards' );
+            console.log( notif );
+            const cards = notif.args.cards;
+            const players = notif.args.players;
+            const self = this;
+            cards.forEach((card) => {
+                const duration = self.randomInteger()
+                self.addCardToPlayerHand(card, players, duration);
+            });
+
+            // update teams, and player data
             this.updatePlayersGamedata(players);
-            this.updatePlayerCardsInHand();
-
-            //create card on player board;
-            const cardDiv = this.getCardDiv(cardSelector, card.id, card);
-            dojo.place(cardDiv, 'js-deck');
-
-            this.slide(cardSelector, destinationSelector);
-            this.addTooltip(cardSelector, card.label, _('Click to select card'));
-            dojo.connect($(cardSelector), 'onclick', this, this.onHandCardClick);
-            if (this.isCurrentPlayerActive()) {
-                this.addClassFromSelector('#js-hand__cards .card', 'card--selectable');
-            } else {
-                this.removeClassFromSelector('#js-hand__cards .card', 'card--selectable');
-            }
+            this.flipIDCard();
         },
 
         notif_drawCard: function( notif )
@@ -736,13 +797,7 @@ function (dojo, declare, noUiSlider) {
             const to = notif.args.to;
             const totalOfCards = notif.args.totalOfCards;
 
-            for(let i = 0; i <= totalOfCards; i++) {
-                const cardId = `js-from--${from}--to--${to}--${i}`;
-                const duration = this.randomInteger(500, 1200);
-                const backCard = this.format_block('jstpl_back_card', { DOMID: cardId });
-                dojo.place(backCard, from);
-                this.slide(cardId, to, { clearPos: false, duration: duration });
-            }
+            this.moveMultipleCards(from, to, totalOfCards);
             this.updatePlayerCardsInHand();
         },
 
@@ -770,7 +825,7 @@ function (dojo, declare, noUiSlider) {
             const player_id = notif.args.player_id;
 
             Object.values(cards).forEach((card) => {
-                const duration = this.randomInteger(500, 1200);
+                const duration = this.randomInteger();
                 let cardSelector = `js-card-${card.id}`;
                 const isCardAvailable = $(cardSelector);
                 // wipe all current cards
@@ -803,13 +858,68 @@ function (dojo, declare, noUiSlider) {
             console.log( 'notif_endScore' );
             console.log( notif );
 
-            setTimeout(() => {
-                const winner_matches = notif.args.winner_matches;
+            const winner_matches = notif.args.winner_matches;
+            const players = notif.args.players;
+            for (let player_id in players ) {
+                const player = players[player_id];
+                this.playerScoreCounters[player_id].toValue(player.score);
+            }
 
+            setTimeout(() => {
                 for (let cell of winner_matches) {
                     this.addClassFromSelector('#js-board-cell--' + cell, 'card--selected');
                 }
             }, 2000);
+        },
+
+        notif_newMatch: function ( notif )
+        {
+            console.log( 'notif_newMatch' );
+            console.log( notif );
+            const self = this;
+            const totalCardsOnPreviousDiscardPile = notif.args.totalCardsOnPreviousDiscardPile;
+            const totalcardsondeck = notif.args.totalcardsondeck;
+            const totalcardsondiscardpile = notif.args.totalcardsondiscardpile;
+            const initialCard = notif.args.initialCard;
+            const discardCard = notif.args.discardCard;
+
+            self.moveMultipleCards('js-discard-pile-card', 'js-deck', totalCardsOnPreviousDiscardPile);
+
+            const currentPlayerCards = Array.from(document.querySelectorAll('#js-hand__cards [data-id]'));
+            currentPlayerCards.forEach(card => {
+                const cardSelector = card.id;
+                const duration = self.randomInteger();
+
+                self.slide(cardSelector, 'js-deck', { duration: duration }).then(() => {
+                    dojo.destroy(cardSelector);
+                });
+            });
+
+            const currentGridCards = Array.from(document.querySelectorAll('.ttm-board-grid [data-id]'));
+            currentGridCards.forEach(card => {
+                self.moveMultipleCards(card.id, 'js-deck', 1);
+
+                // Add event listeners to Grid cells
+                Array.from(document.querySelectorAll('[id^="js-board-cell--"]')).forEach(function(el) {
+                    self.removeTooltip(card.id);
+                    self.clearCardAttributes(card.id);
+
+                    self.addTooltip(el.id, _('Card space'), _('Click to place card'));
+                    dojo.connect($(el.id), 'onclick', self, self.onGridCardClick);
+                });
+            });
+            self.setNumberOfCardsOnBadge(totalcardsondeck, 'js-deck-badge');
+
+            // initialCard
+            self.replaceCardOnCell(4, initialCard);
+
+            // discardPile
+            if (discardCard) {
+                self.replaceCardOnDiscardPile(discardCard);
+            } else {
+                self.clearCardAttributes('js-discard-pile-card')
+            }
+            self.setNumberOfCardsOnBadge(totalcardsondiscardpile, 'js-discard-pile-badge');
         },
 
        /***********************************

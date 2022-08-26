@@ -15,7 +15,7 @@
 $gameinfos = array(
 
 // Name of the game in English (will serve as the basis for translation)
-'game_name' => totranslate("Tic Tac Match"),
+'game_name' => totranslate("Tic-Tac Match"),
 
 // Game designer (or game designers, separated by commas)
 'designer' => 'Larry Ashlock',
