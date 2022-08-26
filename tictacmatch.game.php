@@ -454,7 +454,8 @@ class tictacmatch extends Table
             }
         }
 
-        if ($score == self::getGameStateValue(self::MATCHES_TO_WIN)) {
+        // greater than (in case that wasn't the option MATCHES_TO_WIN available)
+        if ($score >= self::getGameStateValue(self::MATCHES_TO_WIN)) {
             self::setGameStateValue(self::END_OF_GAME, 1);
         }
         self::incStat(1, 'matches_played');

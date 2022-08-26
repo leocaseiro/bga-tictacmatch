@@ -44,7 +44,7 @@ $game_options = array(
             4 => array( 'name' => totranslate( 'First to win 4 matches' )),
             5 => array( 'name' => totranslate( 'First to win 5 matches' ) ),
         ),
-        'default' => 4
+        'default' => 1
     ),
 );
 

@@ -70,7 +70,7 @@ function (dojo, declare, noUiSlider) {
                 /*
                     * Create player panel and counters
                 */
-                const matches_to_win = this.gamedatas.matches_to_win;
+                const matches_to_win = this.gamedatas.matches_to_win || 1;
                 const playerPanel = this.format_block('jstpl_playerPanel', {
                     pId: player_id,
                     matches: matches_to_win
@@ -78,7 +78,12 @@ function (dojo, declare, noUiSlider) {
                 dojo.place(playerPanel, 'player_board_' + player_id);
                 this.addTooltip('cards-in-hand-' + player_id, _('Total cards in hand'), '');
                 this.addTooltip('js-panel-team-card-' + player_id, _('ID Card'), '');
-                this.addTooltip('matches-player-' + player_id, _('Score matches'), _(`First to win ${matches_to_win} matches`));
+
+                if (matches_to_win == 1) {
+                    this.addTooltip('matches-player-' + player_id, _('Score'), '');
+                } else {
+                    this.addTooltip('matches-player-' + player_id, _('Score matches'), _(`First to win ${matches_to_win} matches`));
+                }
 
                 this.cardsCounters[player_id] = new ebg.counter();
                 this.cardsCounters[player_id].create('js-cards-in-hands-counter-' + player_id);
