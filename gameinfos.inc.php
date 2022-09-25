@@ -21,7 +21,7 @@ $gameinfos = array(
 'designer' => 'Larry Ashlock',
 
 // Game artist (or game artists, separated by commas)
-'artist' => 'Ocie Steiner and Everett Rein',
+'artist' => 'Ocie Steiner, Everett Rein',
 
 // Year of FIRST publication of this game. Can be negative.
 'year' => 2020,
